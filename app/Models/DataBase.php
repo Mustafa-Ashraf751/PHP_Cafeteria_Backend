@@ -4,9 +4,6 @@ require __DIR__ . '/../../vendor/autoload.php';
 
 use Dotenv\Dotenv;
 
-
-
-
 class DataBase
 {
   private static $instance = null;

@@ -1,8 +1,14 @@
 <?php
 
-require __DIR__ . '/../../vendor/autoload.php';
+namespace App\Models;
 
+
+use PDO;
+use PDOException;
 use Dotenv\Dotenv;
+
+
+require __DIR__ . '/../../vendor/autoload.php';
 
 class DataBase
 {
@@ -43,10 +49,10 @@ class DataBase
 }
 
 //Just for test class
-/* $conn = DataBase::getDBConnection();
+$conn = DataBase::getDBConnection();
 
 if ($conn) {
   echo "Database connected successfully!";
 } else {
   echo "Failed to connect to the database.";
-} */
+}

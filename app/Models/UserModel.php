@@ -57,6 +57,34 @@ class UserModel
     }
   }
 
+  public function createUser($userData)
+  {
+    try {
+      $fields = [];
+      //To protect database from the sql injection and attacks
+      $placeholders = [];
+      $values = [];
+
+      //Using for loop to make the code more clean
+      foreach ($userData as $key => $value) {
+        $fields[] = $key;
+        $placeholders[] = ":$key";
+        $values[":$key"] = $value;
+      }
+
+      //Using implode function to don't write the fields hardcoded
+      $query = "INSERT INTO $this->tableName (" . implode(', ', $fields) . ") VALUES (" . implode(', ', $placeholders) . ")";
+
+      $stmt = $this->db->prepare($query);
+      $stmt->execute($values);
+
+      //return the id of the lastCreated to return it to the user in controller
+      return $this->db->lastInsertId();
+    } catch (PDOException $e) {
+      throw new Exception("Error creating user please try again!");
+    }
+  }
+
   public function updateUser($id, $userData)
   {
     try {

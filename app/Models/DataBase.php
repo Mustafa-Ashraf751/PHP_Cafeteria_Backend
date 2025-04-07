@@ -43,10 +43,10 @@ class DataBase
 }
 
 //Just for test class
-/* $conn = DataBase::getDBConnection();
+ $conn = DataBase::getDBConnection();
 
 if ($conn) {
   echo "Database connected successfully!";
 } else {
   echo "Failed to connect to the database.";
-} */
+} 

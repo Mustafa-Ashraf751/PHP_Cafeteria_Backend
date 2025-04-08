@@ -1,8 +1,14 @@
 <?php
 
-require __DIR__ . '/../../vendor/autoload.php';
+namespace App\Models;
 
+
+use PDO;
+use PDOException;
 use Dotenv\Dotenv;
+
+
+require __DIR__ . '/../../vendor/autoload.php';
 
 class DataBase
 {

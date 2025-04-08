@@ -1,6 +1,12 @@
 <?php
 
-require_once __DIR__ . '/DataBase.php';
+namespace App\Models;
+
+
+use PDO;
+use PDOException;
+use Exception;
+
 class UserModel
 {
   private $db;
@@ -8,7 +14,7 @@ class UserModel
 
   public function __construct()
   {
-    $this->db = Database::getDBConnection();
+    $this->db = DataBase::getDBConnection();
   }
 
   public function getAllUsers()
@@ -43,11 +49,39 @@ class UserModel
     try {
       $query = "SELECT * FROM $this->tableName WHERE email = :email";
       $stmt = $this->db->prepare($query);
-      $stmt->bindParam(':email', $email, PDO::PARAM_INT);
+      $stmt->bindParam(':email', $email, PDO::PARAM_STR);
       $stmt->execute();
       return $stmt->fetch(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
       throw new Exception("Error fetch the user data by " . $email . $e->getMessage());
+    }
+  }
+
+  public function createUser($userData)
+  {
+    try {
+      $fields = [];
+      //To protect database from the sql injection and attacks
+      $placeholders = [];
+      $values = [];
+
+      //Using for loop to make the code more clean
+      foreach ($userData as $key => $value) {
+        $fields[] = $key;
+        $placeholders[] = ":$key";
+        $values[":$key"] = $value;
+      }
+
+      //Using implode function to don't write the fields hardcoded
+      $query = "INSERT INTO $this->tableName (" . implode(', ', $fields) . ") VALUES (" . implode(', ', $placeholders) . ")";
+
+      $stmt = $this->db->prepare($query);
+      $stmt->execute($values);
+
+      //return the id of the lastCreated to return it to the user in controller
+      return $this->db->lastInsertId();
+    } catch (PDOException $e) {
+      throw new Exception("Error creating user please try again!");
     }
   }
 

@@ -1,107 +1,136 @@
 <?php
-require_once __DIR__ . '/../Models/productsModel.php';
-require_once __DIR__ . '/../config/config.php'; 
-use Cloudinary\Api\Upload\UploadApi;
+
+namespace App\Controllers;
+
+use App\Services\ProductService;
+use Exception;
 
 class ProductController
 {
-    private $productModel;
+    private $productService;
 
     public function __construct()
     {
-        $this->productModel = new Product();
+        $this->productService = new ProductService();
     }
 
-    public function handleRequest()
+    private function jsonResponse($data, $statusCode = 200)
     {
+        http_response_code($statusCode);
         header('Content-Type: application/json');
-        $method = $_SERVER['REQUEST_METHOD'];
-        $requestData = json_decode(file_get_contents('php://input'), true);
+        echo json_encode($data);
+        exit;
+    }
 
+    public function getAllProducts()
+    {
         try {
-            switch ($method) {
-                case 'GET':
-                    $products = $this->productModel->getAll();
-                    echo json_encode($products);
-                    break;
-
-                case 'POST': 
-                    $this->createProduct($requestData);
-                    break;
-
-                case 'PUT': 
-                    $this->updateProduct($requestData);
-                    break;
-
-                case 'DELETE':
-
-                    break;
-
-                default:
-                    throw new Exception('Invalid request method');
+            $products = $this->productService->getAllProducts();
+            if ($products) {
+                $this->jsonResponse($products);
+            } else {
+                $this->jsonResponse(['error' => 'Products not found'], 404);
             }
         } catch (Exception $e) {
-            http_response_code(400);
-            echo json_encode(['message' => $e->getMessage()]);
+            $this->jsonResponse([
+                'error' => 'Failed to fetch products',
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
 
-    private function createProduct($data)
+    public function getProductById($id)
     {
-        var_dump($data);
-        exit;
-        if (!isset($data['name'], $data['price'], $data['description'], $data['quantity'])) {
-            throw new Exception('Missing required fields');
+        try {
+            $product = $this->productService->getProductById($id);
+            if ($product) {
+                $this->jsonResponse($product);
+            } else {
+                $this->jsonResponse(['error' => 'Product not found'], 404);
+            }
+        } catch (Exception $e) {
+            $this->jsonResponse([
+                'error' => 'Failed to fetch product',
+                'message' => $e->getMessage()
+            ], 500);
         }
-
-        $imageUrl = null;
-        if (isset($_FILES['image']) && $_FILES['image']['tmp_name']) {
-            $imageUrl = $this->uploadToCloudinary($_FILES['image']['tmp_name']);
-        }
-
-        $productId = $this->productModel->create([
-            'name' => $data['name'],
-            'price' => $data['price'],
-            'description' => $data['description'],
-            'quantity' => $data['quantity'],
-            'categoryId' => $data['categoryId'] ?? null,
-            'image' => $imageUrl,
-        ]);
-
-        echo json_encode(['message' => 'Product created successfully', 'id' => $productId]);
     }
 
-    private function updateProduct($data)
+    public function addProduct()
     {
-        if (!isset($data['id'])) {
-            throw new Exception('Product ID is required for update');
-        }
+        try {
+            // Get JSON data from the request body
+            $json = file_get_contents('php://input');
+            $data = json_decode($json, true);
 
-        $imageUrl = null;
-        if (isset($_FILES['image']) && $_FILES['image']['tmp_name']) {
-            $imageUrl = $this->uploadToCloudinary($_FILES['image']['tmp_name']);
-        }
+            // Add validation for required fields
+            if (!isset($data['name']) || !isset($data['price']) || !isset($data['category'])) {
+                $this->jsonResponse([
+                    'error' => 'Missing required fields',
+                    'message' => 'Name, price and category are required.'
+                ], 400);
+            }
 
-        $updated = $this->productModel->update($data['id'], [
-            'name' => $data['name'] ?? null,
-            'price' => $data['price'] ?? null,
-            'description' => $data['description'] ?? null,
-            'quantity' => $data['quantity'] ?? null,
-            'categoryId' => $data['categoryId'] ?? null,
-            'image' => $imageUrl,
-        ]);
+            // If quantity is not in JSON data, default to POST or set to 0
+            $data['quantity'] = $data['quantity'] ?? ($_POST['quantity'] ?? 0);
 
-        if ($updated) {
-            echo json_encode(['message' => 'Product updated successfully']);
-        } else {
-            throw new Exception('Failed to update product');
+            $result = $this->productService->addProduct($data);
+            if ($result) {
+                $this->jsonResponse(['message' => 'Product added successfully'], 201);
+            } else {
+                $this->jsonResponse(['error' => 'Failed to add product'], 400);
+            }
+        } catch (Exception $e) {
+            $this->jsonResponse([
+                'error' => 'Failed to add product',
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
 
-    private function uploadToCloudinary($filePath)
+    public function updateProduct()
     {
-        $uploadApi = new UploadApi();
-        $response = $uploadApi->upload($filePath);
-        return $response['secure_url'] ?? null;
+        try {
+            $data = [
+                'id' => $_POST['id'],
+                'name' => $_POST['name'],
+                'price' => $_POST['price'],
+                'category' => $_POST['category'],
+                'image_path' => $_FILES['image']['tmp_name'] ?? null,
+                'image_url' => $_POST['image_url'] ?? null
+            ];
+
+            $result = $this->productService->updateProduct($data);
+            if ($result) {
+                $this->jsonResponse([
+                    'message' => 'Updated Product',
+                    'data' => $result
+                ]);
+            } else {
+                $this->jsonResponse(['error' => 'Failed to update product'], 400);
+            }
+        } catch (Exception $e) {
+            $this->jsonResponse([
+                'error' => 'Failed to update product',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
-}   
+
+    public function deleteProduct($id)
+    {
+        try {
+            $result = $this->productService->deleteProduct($id);
+            if ($result) {
+                $this->jsonResponse(['message' => 'Product deleted successfully'], 204);
+            } else {
+                $this->jsonResponse(['error' => 'Failed to delete product'], 400);
+            }
+        } catch (Exception $e) {
+            $this->jsonResponse([
+                'error' => 'Failed to delete product',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+}

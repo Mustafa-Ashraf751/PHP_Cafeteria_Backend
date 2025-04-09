@@ -2,7 +2,7 @@
 
 namespace App;
 
-
+use App\Controllers\ProductController;
 use App\Routers\Router;
 use App\Controllers\UserController;
 
@@ -14,6 +14,14 @@ $router->get('/users/{id}', UserController::class, 'show');
 $router->post('/users', UserController::class, 'store');
 $router->patch('/users/{id}', UserController::class, 'update');
 $router->delete('/users/{id}', UserController::class, 'delete');
+
+// Define routes for product management
+$router->get('/products', ProductController::class, 'index');
+$router->get('/products/{id}', ProductController::class, 'show');
+$router->post('/products', ProductController::class, 'store');
+$router->patch('/products/{id}', ProductController::class, 'update');
+$router->delete('/products/{id}', ProductController::class, 'delete');
+
 
 // Authentication routes
 // $router->post('/login', UserController::class, 'login');

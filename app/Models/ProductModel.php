@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\DataBase;
 use PDO;
 use PDOException;
-use Exception;
 
 class ProductModel
 {
@@ -15,100 +15,80 @@ class ProductModel
   {
     $this->db = DataBase::getDBConnection();
   }
-
   public function getAllProducts()
   {
-    try {
-      $query = "SELECT * FROM $this->tableName";
+    $query = "SELECT 
+                    products.*, 
+                    categories.name as category_name 
+                  FROM products 
+                  LEFT JOIN categories 
+                    ON products.categoryId = categories.id";
 
-      $stmt = $this->db->prepare($query);
-      $stmt->execute();
-      return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-      throw new Exception("Error fetching products data: " . $e->getMessage());
-    }
+    $stmt = $this->db->prepare($query);
+    $stmt->execute();
+    return $stmt->fetchAll(\PDO::FETCH_ASSOC);
   }
 
   public function getProductById($id)
   {
+    $query = "SELECT * FROM $this->tableName WHERE id = :id";
+    $stmt = $this->db->prepare($query);
+    $stmt->bindParam(':id', $id);
+    $stmt->execute();
+    return $stmt->fetch(\PDO::FETCH_ASSOC);
+  }
+
+  public function addProduct($data)
+  {
     try {
-      $query = "SELECT * FROM $this->tableName WHERE id = :id";
+      $query = "INSERT INTO $this->tableName 
+                  (name, price, description, quantity, categoryId, image, createdAt, updatedAt) 
+                  VALUES 
+                  (:name, :price, :description, :quantity, :categoryId, :image, :createdAt, :updatedAt)";
+
       $stmt = $this->db->prepare($query);
-      $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-      $stmt->execute();
-      return $stmt->fetch(PDO::FETCH_ASSOC);
+
+      // Bind parameters with explicit types
+      $stmt->bindParam(':name', $data['name'], PDO::PARAM_STR);
+      $stmt->bindParam(':price', $data['price'], PDO::PARAM_STR); // DECIMAL as string
+      $stmt->bindParam(':description', $data['description'], PDO::PARAM_STR);
+      $stmt->bindParam(':quantity', $data['quantity'], PDO::PARAM_INT);
+      $stmt->bindParam(':categoryId', $data['categoryId'], PDO::PARAM_INT);
+      $stmt->bindParam(':image', $data['image'], PDO::PARAM_STR);
+      $stmt->bindParam(':createdAt', $data['createdAt'], PDO::PARAM_STR);
+      $stmt->bindParam(':updatedAt', $data['updatedAt'], PDO::PARAM_STR);
+
+      return $stmt->execute();
     } catch (PDOException $e) {
-      throw new Exception("Error fetching the product data by ID " . $id . ": " . $e->getMessage());
+      error_log("Product insertion error: " . $e->getMessage());
+      return false;
     }
   }
 
-  public function getProductByName($name)
+  public function updateProduct($data)
   {
-    try {
-      $query = "SELECT * FROM $this->tableName WHERE name = :name";
-      $stmt = $this->db->prepare($query);
-      $stmt->bindParam(':name', $name, PDO::PARAM_STR);
-      $stmt->execute();
-      return $stmt->fetch(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-      throw new Exception("Error fetching the product data by name " . $name . ": " . $e->getMessage());
-    }
-  }
+    $query = "UPDATE $this->tableName 
+                  SET name = :name, price = :price, description = :description, quantity = :quantity, 
+                      categoryId = :categoryId, image = :image, updatedAt = :updatedAt 
+                  WHERE id = :id";
+    $stmt = $this->db->prepare($query);
+    $stmt->bindParam(':name', $data['name']);
+    $stmt->bindParam(':price', $data['price']);
+    $stmt->bindParam(':description', $data['description']);
+    $stmt->bindParam(':quantity', $data['quantity']);
+    $stmt->bindParam(':categoryId', $data['categoryId']);
+    $stmt->bindParam(':image', $data['image']);
+    $stmt->bindParam(':updatedAt', $data['updatedAt']);
+    $stmt->bindParam(':id', $data['id']);
 
-  public function createProduct($productData)
-  {
-    try {
-      $fields = [];
-      $placeholders = [];
-      $values = [];
-
-      foreach ($productData as $key => $value) {
-        $fields[] = $key;
-        $placeholders[] = ":$key";
-        $values[":$key"] = $value;
-      }
-
-      $query = "INSERT INTO $this->tableName (" . implode(', ', $fields) . ") VALUES (" . implode(', ', $placeholders) . ")";
-
-      $stmt = $this->db->prepare($query);
-      $stmt->execute($values);
-
-      return $this->db->lastInsertId();
-    } catch (PDOException $e) {
-      throw new Exception("Error creating product: " . $e->getMessage());
-    }
-  }
-
-  public function updateProduct($id, $productData)
-  {
-    try {
-      $fields = [];
-      $params = [':id' => $id];
-
-      foreach ($productData as $key => $value) {
-        $fields[] = "$key = :$key";
-        $params[":$key"] = $value;
-      }
-
-      $query = "UPDATE $this->tableName SET " . implode(', ', $fields) . " WHERE id = :id";
-      $stmt = $this->db->prepare($query);
-      return $stmt->execute($params);
-    } catch (PDOException $e) {
-      throw new Exception("Error updating product: " . $e->getMessage());
-    }
+    return $stmt->execute();
   }
 
   public function deleteProduct($id)
   {
-    try {
-      $query = "DELETE FROM $this->tableName WHERE id = :id";
-
-      $stmt = $this->db->prepare($query);
-
-      $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-      return $stmt->execute();
-    } catch (PDOException $e) {
-      throw new Exception("Error deleting product: " . $e->getMessage());
-    }
+    $query = "DELETE FROM $this->tableName WHERE id = :id";
+    $stmt = $this->db->prepare($query);
+    $stmt->bindParam(':id', $id);
+    return $stmt->execute();
   }
 }

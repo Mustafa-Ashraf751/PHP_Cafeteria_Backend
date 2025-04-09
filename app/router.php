@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Controllers\CategoryController;
 use App\Controllers\ProductController;
 use App\Routers\Router;
 use App\Controllers\UserController;
@@ -16,12 +17,16 @@ $router->patch('/users/{id}', UserController::class, 'update');
 $router->delete('/users/{id}', UserController::class, 'delete');
 
 // Define routes for product management
-$router->get('/products', ProductController::class, 'index');
-$router->get('/products/{id}', ProductController::class, 'show');
-$router->post('/products', ProductController::class, 'store');
-$router->patch('/products/{id}', ProductController::class, 'update');
-$router->delete('/products/{id}', ProductController::class, 'delete');
-
+$router->get('/products', ProductController::class, 'getAllProducts');
+$router->get('/products/{id}', ProductController::class, 'getProductById');
+$router->post('/products', ProductController::class, 'addProduct');
+$router->patch('/products/{id}', ProductController::class, 'updateProduct');
+$router->delete('/products/{id}', ProductController::class, 'deleteProduct');
+// Define routes for category management
+$router->get('/categories', CategoryController::class, 'getCategories');
+$router->post('/categories', CategoryController::class, 'addCategory');
+$router->put('/categories/{id}', CategoryController::class, 'updateCategory');
+$router->delete('/categories/{id:\d+}', CategoryController::class, 'deleteCategoryById');
 
 // Authentication routes
 // $router->post('/login', UserController::class, 'login');

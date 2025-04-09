@@ -17,7 +17,7 @@ class UserModel
     $this->db = DataBase::getDBConnection();
   }
 
-  public function getAllUsers()
+  public function getAllUsers($page = 1)
   {
     try {
       $query = "SELECT * FROM $this->tableName";

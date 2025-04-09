@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-
+use Cloudinary\Transformation\Offset;
 use PDO;
 use PDOException;
 use Exception;
@@ -17,14 +17,32 @@ class UserModel
     $this->db = DataBase::getDBConnection();
   }
 
-  public function getAllUsers()
+  public function getAllUsers($page = 1, $perPage = 6)
   {
     try {
-      $query = "SELECT * FROM $this->tableName";
-
+      //Eq to calc the offset
+      $offset = ($page - 1) * $perPage;
+      $query = "SELECT * FROM $this->tableName LIMIT :limit OFFSET :offset";
       $stmt = $this->db->prepare($query);
+      $stmt->bindParam(':limit', $perPage, PDO::PARAM_INT);
+      $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
       $stmt->execute();
-      return $stmt->fetchAll(PDO::FETCH_ASSOC);
+      $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+      $countQuery = "SELECT COUNT(*) as total FROM $this->tableName";
+      $countStmt = $this->db->prepare($countQuery);
+      $countStmt->execute();
+      $totalCount = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+      return [
+        'data' => $users,
+        'pagination' => [
+          'total' => (int)$totalCount,
+          'per_page' => $perPage,
+          'current_page' => $page,
+          'last_page' => ceil($totalCount / $perPage),
+          'from' => $offset + 1,
+          'to' => min($offset + $perPage, $totalCount)
+        ]
+      ];
     } catch (PDOException $e) {
       throw new Exception("Error fetching users data" . $e->getMessage());
     }

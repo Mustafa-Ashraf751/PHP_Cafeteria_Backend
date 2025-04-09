@@ -16,9 +16,12 @@ class UserService
     $this->userModel = new UserModel();
   }
 
-  public function getAllUsers()
+  public function getAllUsers($page = 1, $perPage = 10)
   {
-    return $this->userModel->getAllUsers();
+    //Validate the parameters before send it to controller
+    $page = max(1, (int)$page);
+    $perPage = max(1, min(100, (int)$perPage));
+    return $this->userModel->getAllUsers($page, $perPage);
   }
 
   public function getUserById($id)

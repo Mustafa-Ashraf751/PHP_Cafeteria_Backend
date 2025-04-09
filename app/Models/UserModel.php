@@ -10,7 +10,7 @@ use Exception;
 class UserModel
 {
   private $db;
-  private $tableName = 'User';
+  private $tableName = 'users';
 
   public function __construct()
   {

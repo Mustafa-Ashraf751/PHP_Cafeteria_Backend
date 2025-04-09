@@ -2,34 +2,19 @@
     RewriteEngine On
     RewriteBase /PHP_Cafeteria_Backend/public/
 
-    # Enable CORS
-    Header set Access-Control-Allow-Origin "*"
-    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-    Header set Access-Control-Allow-Headers "Content-Type, Authorization"
-
-    # Handle OPTIONS method for CORS preflight
+    # Handle preflight requests
     RewriteCond %{REQUEST_METHOD} OPTIONS
-    RewriteRule ^(.*)$ $1 [R=200,L]
+    RewriteRule ^ - [R=200,L]
 
-    # Allow direct access to files
+    # Standard rewrite rules
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-
-    # Route everything else to index.php
-    RewriteRule ^(.*)$ index.php [QSA,L]
-
-    # Set default character set
-    AddDefaultCharset UTF-8
-
-    # Enable error logging
-    php_flag display_errors on
-    php_value error_reporting E_ALL
+    RewriteRule ^ index.php [L]
 </IfModule>
 
-# Disable directory listing
-Options -Indexes
-
-# Set security headers
-Header set X-Content-Type-Options "nosniff"
-Header set X-XSS-Protection "1; mode=block"
-Header set X-Frame-Options "SAMEORIGIN"
+<IfModule mod_headers.c>
+    Header always set Access-Control-Allow-Origin "http://localhost:5173"
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
+    Header always set Access-Control-Allow-Credentials "true"
+</IfModule>

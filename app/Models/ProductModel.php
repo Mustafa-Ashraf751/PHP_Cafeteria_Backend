@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Models\DataBase;
+use PDO;
+use PDOException;
 
 class ProductModel
 {
@@ -15,7 +17,13 @@ class ProductModel
     }
     public function getAllProducts()
     {
-        $query = "SELECT * FROM $this->tableName";
+        $query = "SELECT 
+                    products.*, 
+                    categories.name as category_name 
+                  FROM products 
+                  LEFT JOIN categories 
+                    ON products.categoryId = categories.id";
+        
         $stmt = $this->db->prepare($query);
         $stmt->execute();
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -31,21 +39,32 @@ class ProductModel
     }
 
     public function addProduct($data)
-    {
-        $query = "INSERT INTO $this->tableName (name, price, description, quantity, categoryId, image, createdAt, updatedAt) 
-                  VALUES (:name, :price, :description, :quantity, :categoryId, :image, :createdAt, :updatedAt)";
+{
+    try {
+        $query = "INSERT INTO $this->tableName 
+                  (name, price, description, quantity, categoryId, image, createdAt, updatedAt) 
+                  VALUES 
+                  (:name, :price, :description, :quantity, :categoryId, :image, :createdAt, :updatedAt)";
+        
         $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':name', $data['name']);
-        $stmt->bindParam(':price', $data['price']);
-        $stmt->bindParam(':description', $data['description']);
-        $stmt->bindParam(':quantity', $data['quantity']);
-        $stmt->bindParam(':categoryId', $data['categoryId']);
-        $stmt->bindParam(':image', $data['image']);
-        $stmt->bindParam(':createdAt', $data['createdAt']);
-        $stmt->bindParam(':updatedAt', $data['updatedAt']);
+        
+        // Bind parameters with explicit types
+        $stmt->bindParam(':name', $data['name'], PDO::PARAM_STR);
+        $stmt->bindParam(':price', $data['price'], PDO::PARAM_STR); // DECIMAL as string
+        $stmt->bindParam(':description', $data['description'], PDO::PARAM_STR);
+        $stmt->bindParam(':quantity', $data['quantity'], PDO::PARAM_INT);
+        $stmt->bindParam(':categoryId', $data['categoryId'], PDO::PARAM_INT);
+        $stmt->bindParam(':image', $data['image'], PDO::PARAM_STR);
+        $stmt->bindParam(':createdAt', $data['createdAt'], PDO::PARAM_STR);
+        $stmt->bindParam(':updatedAt', $data['updatedAt'], PDO::PARAM_STR);
 
         return $stmt->execute();
+        
+    } catch (PDOException $e) {
+        error_log("Product insertion error: " . $e->getMessage());
+        return false;
     }
+}
 
     public function updateProduct($data)
     {
@@ -73,4 +92,5 @@ class ProductModel
         $stmt->bindParam(':id', $id);
         return $stmt->execute();
     }
+
 }

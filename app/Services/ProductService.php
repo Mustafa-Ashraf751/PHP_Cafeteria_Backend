@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use Cloudinary\Cloudinary;
-use Cloudinary\Configuration\Configuration;
 use Dotenv\Dotenv;
 use App\Models\ProductModel;
 
@@ -19,13 +18,13 @@ class ProductService
 
         $this->productModel = new ProductModel();
 
-        // Configure Cloudinary
-        $config = new Configuration();
-        $config->cloud->cloudName = $_ENV['CLOUDINARY_CLOUD_NAME'];
-        $config->cloud->apiKey = $_ENV['CLOUDINARY_API_KEY'];
-        $config->cloud->apiSecret = $_ENV['CLOUDINARY_API_SECRET'];
-
-        $this->cloudinary = new Cloudinary($config);
+        $this->cloudinary = new Cloudinary([
+            'cloud' => [
+                'cloud_name' => $_ENV['CLOUDINARY_CLOUD_NAME'],
+                'api_key'    => $_ENV['CLOUDINARY_API_KEY'],
+                'api_secret' => $_ENV['CLOUDINARY_API_SECRET'],
+            ]
+        ]);
     }
 
     public function getAllProducts()
@@ -40,31 +39,36 @@ class ProductService
 
     public function addProduct($data)
     {
+        // Validate required fields
+        if (empty($data['categoryId'])) {
+            throw new \InvalidArgumentException('Category ID is required');
+        }
+    
         $productData = [
             'name' => $data['name'],
-            'price' => $data['price'],
-            'description' => $data['description'],
-            'quantity' => $data['quantity'],
-            'categoryId' => $data['categoryId'],
+            'price' => number_format((float)$data['price'], 2),
+            'description' => $data['description'] ?? '',
+            'quantity' => (int)($data['quantity'] ?? 0),
+            'categoryId' => (int)$data['categoryId'],
             'createdAt' => date('Y-m-d H:i:s'),
             'updatedAt' => date('Y-m-d H:i:s')
         ];
-
-        // Handle image upload if an image file is provided
-        if (isset($data['image']) && !empty($data['image'])) {
+    
+        // Handle image upload
+        if (!empty($data['image'])) {
             try {
                 $uploadResult = $this->cloudinary->uploadApi()->upload($data['image'], [
                     'folder' => 'products',
+                    'resource_type' => 'image'
                 ]);
                 $productData['image'] = $uploadResult['secure_url'];
             } catch (\Exception $e) {
-                throw new \Exception('Image upload failed: ' . $e->getMessage());
+                throw new \RuntimeException('Image upload failed: ' . $e->getMessage());
             }
         } else {
-            // Set a default image URL or leave it null based on your requirements
             $productData['image'] = null;
         }
-
+    
         return $this->productModel->addProduct($productData);
     }
 
@@ -96,4 +100,5 @@ class ProductService
     {
         return $this->productModel->deleteProduct($id);
     }
+    
 }

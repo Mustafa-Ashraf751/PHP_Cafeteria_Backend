@@ -59,35 +59,95 @@ class ProductController
     public function addProduct()
     {
         try {
-            // Get JSON data from the request body
-            $json = file_get_contents('php://input');
-            $data = json_decode($json, true);
+            // Determine input type
+            $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+            $isJson = strpos($contentType, 'application/json') !== false;
+            $isMultipart = strpos($contentType, 'multipart/form-data') !== false;
 
-            // Add validation for required fields
-            if (!isset($data['name']) || !isset($data['price']) || !isset($data['category'])) {
-                $this->jsonResponse([
-                    'error' => 'Missing required fields',
-                    'message' => 'Name, price and category are required.'
-                ], 400);
-            }
+            // Initialize input array
+            $input = [];
 
-            // If quantity is not in JSON data, default to POST or set to 0
-            $data['quantity'] = $data['quantity'] ?? ($_POST['quantity'] ?? 0);
+            if ($isJson) {
+                // Handle JSON input
+                $input = json_decode(file_get_contents('php://input'), true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    $this->jsonResponse(['error' => 'Invalid JSON format'], 400);
+                }
+            } elseif ($isMultipart) {
+                // Handle form data input
+                $input = $_POST;
 
-            $result = $this->productService->addProduct($data);
-            if ($result) {
-                $this->jsonResponse(['message' => 'Product added successfully'], 201);
+                // Handle file upload
+                if (!empty($_FILES['image']['tmp_name'])) {
+                    $input['image'] = $_FILES['image'];
+                }
             } else {
-                $this->jsonResponse(['error' => 'Failed to add product'], 400);
+                $this->jsonResponse(['error' => 'Unsupported content type'], 415);
             }
+
+            // Validate required fields
+            $required = ['name', 'price', 'categoryId'];
+            foreach ($required as $field) {
+                if (empty($input[$field])) {
+                    $this->jsonResponse([
+                        'error' => 'Missing required field: ' . $field
+                    ], 400);
+                }
+            }
+
+            // Numeric validation
+            if (!is_numeric($input['price']) || $input['price'] <= 0) {
+                $this->jsonResponse(['error' => 'Invalid price format'], 400);
+            }
+
+            // Process image if present
+            if (isset($input['image'])) {
+                // Handle file upload from form data
+                if (is_array($input['image'])) {
+                    $input['image'] = $input['image']['tmp_name'];
+                }
+                // For base64 images from JSON
+                elseif ($isJson && preg_match('/^data:image\/(\w+);base64,/', $input['image'], $matches)) {
+                    $input['image'] = $this->handleBase64Image($input['image']);
+                }
+            }
+
+            $result = $this->productService->addProduct($input);
+
+            if ($result) {
+                $this->jsonResponse([
+                    'message' => 'Product created successfully',
+                    'data' => $result
+                ], 201);
+            }
+
+            $this->jsonResponse(['error' => 'Product creation failed'], 500);
         } catch (Exception $e) {
             $this->jsonResponse([
-                'error' => 'Failed to add product',
+                'error' => 'Product creation error',
                 'message' => $e->getMessage()
             ], 500);
         }
     }
 
+    private function handleBase64Image($base64Image)
+    {
+        try {
+            // Extract image type and data
+            list($type, $data) = explode(';', $base64Image);
+            list(, $data) = explode(',', $data);
+            $data = base64_decode($data);
+            $extension = explode('/', $type)[1];
+
+            // Create temporary file
+            $tempPath = tempnam(sys_get_temp_dir(), 'img') . '.' . $extension;
+            file_put_contents($tempPath, $data);
+
+            return $tempPath;
+        } catch (Exception $e) {
+            throw new Exception('Invalid image format: ' . $e->getMessage());
+        }
+    }
     public function updateProduct()
     {
         try {
@@ -122,14 +182,18 @@ class ProductController
         try {
             $result = $this->productService->deleteProduct($id);
             if ($result) {
-                $this->jsonResponse(['message' => 'Product deleted successfully'], 204);
+                // 204 No Content should not include a response body
+                return $this->jsonResponse([], 204);
             } else {
-                $this->jsonResponse(['error' => 'Failed to delete product'], 400);
+                // Assuming the product wasn't found; adjust status code as needed
+                return $this->jsonResponse(['error' => 'Product not found'], 404);
             }
         } catch (Exception $e) {
-            $this->jsonResponse([
+            // Log the exception here (optional)
+            // Avoid exposing internal errors in production
+            return $this->jsonResponse([
                 'error' => 'Failed to delete product',
-                'message' => $e->getMessage()
+                // 'message' => $e->getMessage() // Only include in development
             ], 500);
         }
     }

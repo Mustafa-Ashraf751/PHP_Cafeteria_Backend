@@ -1,38 +1,22 @@
 <?php
+// Set headers at the VERY TOP before any output
+// header("Access-Control-Allow-Origin: http://localhost:5173");
+// header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+// header("Access-Control-Allow-Headers: Content-Type, Authorization");
+// header("Access-Control-Allow-Credentials: true");
+header('Content-Type: application/json');
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+// Immediately handle OPTIONS requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    header("HTTP/1.1 200 OK");
+    exit();
+}
+
+// Now load dependencies
+require __DIR__ . '/../vendor/autoload.php';
+
 error_reporting(E_ALL);
-error_log("Script started");
+ini_set('display_errors', 1);
 
-require_once __DIR__ . '/../vendor/autoload.php';
-
-error_log("Autoloader initialized");
-
-// Load environment variables
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
-$dotenv->load();
-
-error_log("Environment variables loaded");
-
-use App\Routers\Router;
-use App\Controllers\ProductController;
-use App\Controllers\UserController;
-
-$router = new Router();
-
-// Define product routes
-$router->get('/products', [ProductController::class, 'getAllProducts']);
-$router->get('/products/{id}', [ProductController::class, 'getProductById']);
-$router->post('/products', [ProductController::class, 'addProduct']);
-$router->patch('/products/{id}', [ProductController::class, 'updateProduct']);
-$router->delete('/products/{id}', [ProductController::class, 'deleteProduct']);
-
-// Define routes for user management
-$router->get('/users', [UserController::class, 'index']);
-$router->get('/users/{id}', [UserController::class, 'show']);
-$router->post('/users', [UserController::class, 'store']);
-$router->patch('/users/{id}', [UserController::class, 'update']);
-$router->delete('/users/{id}', [UserController::class, 'delete']);
-
-$router->run();
+$router = require __DIR__ . '/../app/router.php';
+$router->dispatch();

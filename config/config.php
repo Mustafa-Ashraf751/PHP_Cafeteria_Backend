@@ -8,7 +8,7 @@ use Cloudinary\Api\Upload\UploadApi;
 
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
-
+/*
 Configuration::instance([
     'cloud' => [
         'cloud_name' => $_ENV['CLOUD_NAME'],

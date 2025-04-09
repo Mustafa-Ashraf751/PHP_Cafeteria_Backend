@@ -6,7 +6,11 @@ namespace App;
 use App\Routers\Router;
 use App\Controllers\UserController;
 
-$router = new Router('/PHP_Cafeteria_Backend/public');
+$router = new Router("/ITI/PHP_Cafeteria_Backend/public");
+
+//Public routes
+$router->post('/login', UserController::class, 'login');
+
 
 // Define routes for user management
 $router->get('/users', UserController::class, 'index');
@@ -15,9 +19,10 @@ $router->post('/users', UserController::class, 'store');
 $router->patch('/users/{id}', UserController::class, 'update');
 $router->delete('/users/{id}', UserController::class, 'delete');
 
-// Authentication routes
-// $router->post('/login', UserController::class, 'login');
-// $router->post('/register', UserController::class, 'register');
+// Admin only routes
+$router->get('/admin/users', UserController::class, 'index');  
+$router->post('/admin/users', UserController::class, 'register');
+$router->delete('/admin/users/{id}', UserController::class, 'delete'); 
 
 // Handle 404 errors
 $router->setNotFoundHandler(function () {

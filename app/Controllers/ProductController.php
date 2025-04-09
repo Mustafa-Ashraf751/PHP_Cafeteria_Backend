@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../Models/productsModel.php';
 require_once __DIR__ . '/../config/config.php'; 
 use Cloudinary\Api\Upload\UploadApi;
-
+/*
 class ProductController
 {
     private $productModel;
@@ -54,10 +54,10 @@ class ProductController
             throw new Exception('Missing required fields');
         }
 
-        $imageUrl = null;
-        if (isset($_FILES['image']) && $_FILES['image']['tmp_name']) {
-            $imageUrl = $this->uploadToCloudinary($_FILES['image']['tmp_name']);
-        }
+        // $imageUrl = null;
+        // if (isset($_FILES['image']) && $_FILES['image']['tmp_name']) {
+        //     $imageUrl = $this->uploadToCloudinary($_FILES['image']['tmp_name']);
+        // }
 
         $productId = $this->productModel->create([
             'name' => $data['name'],
@@ -97,11 +97,11 @@ class ProductController
             throw new Exception('Failed to update product');
         }
     }
-
+/*
     private function uploadToCloudinary($filePath)
     {
         $uploadApi = new UploadApi();
         $response = $uploadApi->upload($filePath);
         return $response['secure_url'] ?? null;
     }
-}   
+}*/ 

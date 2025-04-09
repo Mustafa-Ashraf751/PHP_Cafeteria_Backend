@@ -5,11 +5,8 @@
         }
     },
     "require": {
-<<<<<<< HEAD
-        "vlucas/phpdotenv": "^5.3"
-=======
         "vlucas/phpdotenv": "^5.6",
-        "cloudinary/cloudinary_php": "^3.1"
->>>>>>> 931e653 (Implement ProductController and productsModel with CRUD operations and Cloudinary integration)
+        "cloudinary/cloudinary_php": "^3.1",
+        "firebase/php-jwt": "^6.11"
     }
 }

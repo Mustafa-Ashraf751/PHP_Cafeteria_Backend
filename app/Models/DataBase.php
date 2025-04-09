@@ -17,7 +17,7 @@ class DataBase
 
   private function __construct()
   {
-    $dotenv = Dotenv::createImmutable(__DIR__ . '/../../');
+    $dotenv = Dotenv::createImmutable(__DIR__ . "/../../");
     $dotenv->load();
     try {
       $dsn = "mysql:host=" . $_ENV['DB_HOST'] . ";port=" . $_ENV['DB_PORT'] . ";dbname=" . $_ENV['DB_NAME'];

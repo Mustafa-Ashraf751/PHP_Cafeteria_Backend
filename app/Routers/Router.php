@@ -6,7 +6,7 @@ class Router
 {
   private $routes = [];
   private $notFoundCallback;
-  private $basePath = '';
+  private $basePath;
 
   public function __construct($basePath = '')
   {

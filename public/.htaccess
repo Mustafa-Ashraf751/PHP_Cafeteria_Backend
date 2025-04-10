@@ -1,6 +1,6 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /PHP_Cafeteria_Backend/public/
+    RewriteBase /ITI/PHP_Cafeteria_Backend/public/
 
     # Handle preflight requests first
     RewriteCond %{REQUEST_METHOD} OPTIONS

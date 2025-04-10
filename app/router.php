@@ -7,7 +7,11 @@ use App\Controllers\ProductController;
 use App\Routers\Router;
 use App\Controllers\UserController;
 
-$router = new Router('/PHP_Cafeteria_Backend/public');
+$router = new Router("/ITI/PHP_Cafeteria_Backend/public");
+
+//Public routes
+$router->post('/login', UserController::class, 'login');
+
 
 // Define routes for user management
 $router->get('/users', UserController::class, 'index');
@@ -28,9 +32,10 @@ $router->post('/categories', CategoryController::class, 'addCategory');
 $router->put('/categories/{id}', CategoryController::class, 'updateCategory');
 $router->delete('/categories/{id:\d+}', CategoryController::class, 'deleteCategoryById');
 
-// Authentication routes
-// $router->post('/login', UserController::class, 'login');
-// $router->post('/register', UserController::class, 'register');
+// Admin only routes
+$router->get('/admin/users', UserController::class, 'index');  
+$router->post('/admin/users', UserController::class, 'register');
+$router->delete('/admin/users/{id}', UserController::class, 'delete'); 
 
 // Handle 404 errors
 $router->setNotFoundHandler(function () {

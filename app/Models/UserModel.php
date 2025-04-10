@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-
 use PDO;
 use PDOException;
 use Exception;
@@ -17,19 +16,36 @@ class UserModel
     $this->db = DataBase::getDBConnection();
   }
 
-  public function getAllUsers()
+  public function getAllUsers($page = 1, $perPage = 6)
   {
     try {
-      $query = "SELECT * FROM $this->tableName";
-
+      //Eq to calc the offset
+      $offset = ($page - 1) * $perPage;
+      $query = "SELECT * FROM $this->tableName LIMIT :limit OFFSET :offset";
       $stmt = $this->db->prepare($query);
+      $stmt->bindParam(':limit', $perPage, PDO::PARAM_INT);
+      $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
       $stmt->execute();
-      return $stmt->fetchAll(PDO::FETCH_ASSOC);
+      $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+      $countQuery = "SELECT COUNT(*) as total FROM $this->tableName";
+      $countStmt = $this->db->prepare($countQuery);
+      $countStmt->execute();
+      $totalCount = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+      return [
+        'data' => $users,
+        'pagination' => [
+          'total' => (int)$totalCount,
+          'per_page' => $perPage,
+          'current_page' => $page,
+          'last_page' => ceil($totalCount / $perPage),
+          'from' => $offset + 1,
+          'to' => min($offset + $perPage, $totalCount)
+        ]
+      ];
     } catch (PDOException $e) {
       throw new Exception("Error fetching users data" . $e->getMessage());
     }
   }
-
 
   public function getUserById($id)
   {
@@ -57,31 +73,25 @@ class UserModel
     }
   }
 
-  public function createUser($userData)
+  public function createUser($user)
   {
     try {
-      $fields = [];
-      //To protect database from the sql injection and attacks
-      $placeholders = [];
-      $values = [];
+      $stmt = $this->db->prepare("INSERT INTO users (fullName, email, password, roomNum, Ext, profilePic, role, roomId) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 
-      //Using for loop to make the code more clean
-      foreach ($userData as $key => $value) {
-        $fields[] = $key;
-        $placeholders[] = ":$key";
-        $values[":$key"] = $value;
-      }
-
-      //Using implode function to don't write the fields hardcoded
-      $query = "INSERT INTO $this->tableName (" . implode(', ', $fields) . ") VALUES (" . implode(', ', $placeholders) . ")";
-
-      $stmt = $this->db->prepare($query);
-      $stmt->execute($values);
-
-      //return the id of the lastCreated to return it to the user in controller
+      $stmt->execute([
+        $user['fullName'],
+        $user['email'],
+        $user['password'], // Password should already be hashed in the service
+        $user['roomNum'] ?? null,
+        $user['Ext'] ?? null,
+        $user['profilePic'] ?? null,
+        $user['role'],
+        $user['roomId'] ?? null
+      ]);
+      
       return $this->db->lastInsertId();
     } catch (PDOException $e) {
-      throw new Exception("Error creating user please try again!");
+      throw new Exception("Error creating user: " . $e->getMessage());
     }
   }
 

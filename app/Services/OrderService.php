@@ -15,11 +15,11 @@ class OrderService
     }
 
     // create order
-    public function createOrder($userId, $room, $totalPrice, $note = null)
+    public function createOrder($userId, $roomId, $totalAmount, $notes = null)
     {
         try {
             // add order by use Model Order
-            $this->orderModel->createOrder($userId, $room, $totalPrice, $note);
+            $this->orderModel->createOrder($userId, $roomId, $totalAmount, $notes);
             return ['status' => 'success', 'message' => 'Order created successfully.'];
         } catch (Exception $e) {
             return ['status' => 'error', 'message' => 'Failed to create order: ' . $e->getMessage()];
@@ -47,24 +47,24 @@ class OrderService
     }
 
     // update order status
-    public function updateOrderStatus($id, $status)
+    public function updateOrderStatus($id, $orderStatus)
     {
         try {
-            $this->orderModel->updateOrderStatus($id, $status);
+            $this->orderModel->updateOrderStatus($id, $orderStatus);
             return ['status' => 'success', 'message' => 'Order status updated successfully.'];
         } catch (Exception $e) {
             return ['status' => 'error', 'message' => 'Failed to update order status: ' . $e->getMessage()];
         }
     }
 
-    // delete order
-    public function deleteOrder($id)
+    // cancel order (replaces delete)
+    public function cancelOrder($id)
     {
         try {
-            $this->orderModel->deleteOrder($id);
-            return ['status' => 'success', 'message' => 'Order deleted successfully.'];
+            $this->orderModel->cancelOrder($id);
+            return ['status' => 'success', 'message' => 'Order cancelled successfully.'];
         } catch (Exception $e) {
-            return ['status' => 'error', 'message' => 'Failed to delete order: ' . $e->getMessage()];
+            return ['status' => 'error', 'message' => 'Failed to cancel order: ' . $e->getMessage()];
         }
     }
 }

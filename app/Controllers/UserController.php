@@ -28,8 +28,8 @@ class UserController
   public function index()
   {
     try {
-      $page = isset($GET['page']) ? (int)$_GET['page'] : 1;
-      $perPage = isset($GET['per_page']) ? (int) $_GET['per_page'] : 6;
+      $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+      $perPage = isset($_GET['per_page']) ? (int) $_GET['per_page'] : 6;
       $users = $this->userService->getAllUsers($page, $perPage);
       $this->jsonResponse($users);
     } catch (Exception $e) {
@@ -81,7 +81,7 @@ class UserController
       }
       $this->jsonResponse($updatedUser);
     } catch (Exception $e) {
-      $this->jsonResponse(['error' => $e->getMessage(), 500]);
+      $this->jsonResponse(['error' => $e->getMessage()], 500);
     }
   }
 

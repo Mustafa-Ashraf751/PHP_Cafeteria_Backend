@@ -21,7 +21,7 @@ $router->delete('/users/{id}', UserController::class, 'delete');
 $router->get('/products', ProductController::class, 'getAllProducts');
 $router->get('/products/{id}', ProductController::class, 'getProductById');
 $router->post('/products', ProductController::class, 'addProduct');
-$router->patch('/products/{id}', ProductController::class, 'updateProduct');
+$router->post('/products/{id}', ProductController::class, 'updateProduct');
 $router->delete('/products/{id}', ProductController::class, 'deleteProduct');
 // Define routes for category management
 $router->get('/categories', CategoryController::class, 'getCategories');

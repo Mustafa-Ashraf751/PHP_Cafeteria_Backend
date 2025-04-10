@@ -1,5 +1,8 @@
 <?php
-require_once "DataBase.php";
+
+namespace App\Models;
+
+use PDO;
 
 class Order
 {
@@ -10,31 +13,64 @@ class Order
         $this->db = DataBase::getDBConnection();
     }
 
-    public function createOrder($user_id, $status, $total_price, $notes)
+    // إضافة طلب جديد
+    public function createOrder($userId, $room, $totalPrice, $note = null)
     {
-        try {
-            $query = "INSERT INTO orders (user_id,total_price, notes, status, created_at) VALUES (:user_id, :items, :total_price, :notes, 'Processing', NOW())";
-            $stmt = $this->db->prepare($query);
-            $stmt->execute([
-                ":user_id" => $user_id,
-                ":total_price" => $total_price,
-                ":notes" => $notes,
-                ":status" => $status,
-            ]);
-            return ["status" => "success", "message" => "Order created successfully!"];
-        } catch (PDOException $e) {
-            return ["status" => "error", "message" => $e->getMessage()];
-        }
-        return $this->db->lastInsertId();
+        $sql = "INSERT INTO orders (user_id, room, total_price, note, status) VALUES (:user_id, :room, :total_price, :note, :status)";
+        $stmt = $this->db->prepare($sql);
+        
+        $stmt->bindParam(':user_id', $userId);
+        $stmt->bindParam(':room', $room);
+        $stmt->bindParam(':total_price', $totalPrice);
+        $stmt->bindParam(':note', $note);
+        $status = 'Processing';  // حالة الطلب عند الإنشاء
+        $stmt->bindParam(':status', $status);
+        
+        return $stmt->execute();
     }
 
-    public function addOrderItem($orderId, $productId, $quantity)
+    // الحصول على جميع الطلبات
+    public function getAllOrders()
     {
-    // SQL for insert item into order_items
-    $query = "INSERT INTO order_items (order_id, product_id, quantity) VALUES (?, ?, ?)";
-    $stmt = $this->db->prepare($query);
-    $stmt->execute([$orderId, $productId, $quantity]);
+        $sql = "SELECT * FROM orders ORDER BY created_at DESC"; // ترتيب حسب التاريخ (الأحدث أولاً)
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // الحصول على طلب بواسطة ID
+    public function getOrderById($id)
+    {
+        $sql = "SELECT * FROM orders WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        
+        $stmt->bindParam(':id', $id);
+        $stmt->execute();
+        
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    // تحديث حالة الطلب (مثلاً: من Processing إلى Done)
+    public function updateOrderStatus($id, $status)
+    {
+        $sql = "UPDATE orders SET status = :status WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        
+        $stmt->bindParam(':status', $status);
+        $stmt->bindParam(':id', $id);
+        
+        return $stmt->execute();
+    }
+
+    // حذف طلب
+    public function deleteOrder($id)
+    {
+        $sql = "DELETE FROM orders WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        
+        $stmt->bindParam(':id', $id);
+        
+        return $stmt->execute();
+    }
 }
-?>

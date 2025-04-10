@@ -1,39 +1,79 @@
 <?php
-require_once(__DIR__ . '/../Models/Order.php');
 
+namespace App\Controllers;
+
+use App\Services\OrderService;
+use Exception;
 
 class OrderController
 {
-    private $orderModel;
+    private $orderService;
 
     public function __construct()
     {
-        $this->orderModel = new Order();
+        $this->orderService = new OrderService();
     }
 
-    public function createOrder($data)
+    // دالة لإنشاء طلب جديد
+    public function store($params)
     {
-        // تحقق من وجود الحقول المطلوبة
-        if (!isset($data["user_id"]) || !isset($data["items"]) || !isset($data["total_price"])) {
-            return ["status" => "error", "message" => "Missing required fields"];
-        }
-        var_dump($data);
-        // إدخال الطلب في جدول orders
-        $orderId = $this->orderModel->createOrder(
-            $data["user_id"],
-            $data["total_price"],
-            $data["notes"] ?? "",
-            $data["status"] ?? "Processing"
-        );
-    
-        // إدخال كل منتج في جدول order_items
-        foreach ($data["items"] as $item) {
-            var_dump($item);
-            $this->orderModel->addOrderItem($orderId, $item["product_id"], $item["quantity"]);
-        }
-    
-        return ["status" => "success", "message" => "Order created successfully"];
+        // الحصول على البيانات من الطلب (مثل المستخدم، الغرفة، والسعر)
+        $userId = $params['user_id'];  // فرضًا أن هذه البيانات تأتي من الـ request
+        $room = $params['room'];
+        $totalPrice = $params['total_price'];
+        $note = $params['note'] ?? null;  // ملاحظة اختيارية
+
+        // الاتصال بخدمة الطلبات
+        $response = $this->orderService->createOrder($userId, $room, $totalPrice, $note);
+
+        // إرسال الاستجابة للمستخدم
+        echo json_encode($response);
     }
-    
+
+    // دالة لاسترجاع كل الطلبات
+    public function index()
+    {
+        // استرجاع كل الطلبات
+        $orders = $this->orderService->getAllOrders();
+
+        // إرسال الطلبات في استجابة
+        echo json_encode($orders);
+    }
+
+    // دالة لاسترجاع طلب معين باستخدام الـ ID
+    public function show($params)
+    {
+        $orderId = $params['id'];
+
+        // استرجاع الطلب من الخدمة
+        $order = $this->orderService->getOrderById($orderId);
+
+        // إرسال الطلب في استجابة
+        echo json_encode($order);
+    }
+
+    // دالة لتحديث حالة الطلب
+    public function updateStatus($params)
+    {
+        $orderId = $params['id'];
+        $status = $params['status'];
+
+        // تحديث حالة الطلب من خلال الخدمة
+        $response = $this->orderService->updateOrderStatus($orderId, $status);
+
+        // إرسال الاستجابة
+        echo json_encode($response);
+    }
+
+    // دالة لحذف طلب
+    public function delete($params)
+    {
+        $orderId = $params['id'];
+
+        // حذف الطلب من خلال الخدمة
+        $response = $this->orderService->deleteOrder($orderId);
+
+        // إرسال الاستجابة
+        echo json_encode($response);
+    }
 }
-?>

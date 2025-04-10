@@ -14,11 +14,11 @@ class OrderService
         $this->orderModel = new Order();
     }
 
-    // إنشاء طلب جديد
+    // create order
     public function createOrder($userId, $room, $totalPrice, $note = null)
     {
         try {
-            // إضافة الطلب باستخدام نموذج Order
+            // add order by use Model Order
             $this->orderModel->createOrder($userId, $room, $totalPrice, $note);
             return ['status' => 'success', 'message' => 'Order created successfully.'];
         } catch (Exception $e) {
@@ -26,7 +26,7 @@ class OrderService
         }
     }
 
-    // استرجاع جميع الطلبات
+    // get all orders
     public function getAllOrders()
     {
         try {
@@ -36,7 +36,7 @@ class OrderService
         }
     }
 
-    // استرجاع طلب بناءً على الـ ID
+    // get order by id
     public function getOrderById($id)
     {
         try {
@@ -46,7 +46,7 @@ class OrderService
         }
     }
 
-    // تحديث حالة الطلب
+    // update order status
     public function updateOrderStatus($id, $status)
     {
         try {
@@ -57,7 +57,7 @@ class OrderService
         }
     }
 
-    // حذف الطلب
+    // delete order
     public function deleteOrder($id)
     {
         try {

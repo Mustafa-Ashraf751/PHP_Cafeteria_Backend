@@ -69,8 +69,9 @@ class ProductModel
         try {
             // Build the query with conditional image update
             $query = "UPDATE $this->tableName 
-                      SET name = :name, price = :price, description = :description, 
-                          quantity = :quantity, categoryId = :categoryId, updatedAt = :updatedAt";
+            SET name = :name, price = :price, description = :description, 
+                quantity = :quantity, categoryId = :categoryId, updatedAt = :updatedAt,
+                status = CASE WHEN :quantity <= 0 THEN 'unavailable' ELSE 'available' END";
             
             if (isset($data['image'])) {
                 $query .= ", image = :image";

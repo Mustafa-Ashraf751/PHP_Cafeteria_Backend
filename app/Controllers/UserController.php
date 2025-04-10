@@ -54,15 +54,21 @@ class UserController
       if (!isset($data['email']) || !isset($data['password'])) {
         $this->jsonResponse(['error' => 'Email and password are required'], 400);
       }
-      
+
       $user = $this->userService->getUserByEmail($data['email']);
 
-      if (!$user || !password_verify($data['password'], $user['password'])) {
-        $this->jsonResponse(['error' => 'Invalid credentials'], 401);
+      if (!$user) {
+          $this->jsonResponse(['error' => 'User not found'], 401);
       }
 
-      $token = $this->jwtService->generate($user);
-      $this->jsonResponse(['token' => $token, 'user' => $user]);
+      if (password_verify($data['password'], $user['password']) === false) {
+          $this->jsonResponse(['error' => 'Incorrect password'], 401);
+      }else{
+        $token = $this->jwtService->generate($user);
+        $this->jsonResponse(['token' => $token, 'user' => $user]);
+      }
+
+      
     } catch (Exception $e) {
       $this->jsonResponse(['error' => $e->getMessage()], 500);
     }

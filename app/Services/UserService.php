@@ -53,7 +53,7 @@ class UserService
     }
 
     //Hashing password before save it to the database
-    $userData['password'] = PASSWORD_hash($userData['password'], PASSWORD_DEFAULT);
+    $userData['password'] = password_hash($userData['password'], PASSWORD_DEFAULT);
     return $this->userModel->createUser($userData);
   }
 

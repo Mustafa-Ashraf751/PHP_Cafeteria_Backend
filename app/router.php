@@ -10,7 +10,7 @@ use App\Services\CategoryService;
 
 $router = new Router('/PHP_Cafeteria_Backend/public');
 
-// Define routes for user management
+
 $router->get('/users', UserController::class, 'index');
 $router->get('/users/{id}', UserController::class, 'show');
 $router->post('/users', UserController::class, 'store');

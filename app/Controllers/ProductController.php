@@ -59,25 +59,20 @@ class ProductController
     public function addProduct()
     {
         try {
-            // Determine input type
             $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
             $isJson = strpos($contentType, 'application/json') !== false;
             $isMultipart = strpos($contentType, 'multipart/form-data') !== false;
 
-            // Initialize input array
             $input = [];
 
             if ($isJson) {
-                // Handle JSON input
                 $input = json_decode(file_get_contents('php://input'), true);
                 if (json_last_error() !== JSON_ERROR_NONE) {
                     $this->jsonResponse(['error' => 'Invalid JSON format'], 400);
                 }
             } elseif ($isMultipart) {
-                // Handle form data input
                 $input = $_POST;
 
-                // Handle file upload
                 if (!empty($_FILES['image']['tmp_name'])) {
                     $input['image'] = $_FILES['image'];
                 }
@@ -85,7 +80,6 @@ class ProductController
                 $this->jsonResponse(['error' => 'Unsupported content type'], 415);
             }
 
-            // Validate required fields
             $required = ['name', 'price', 'categoryId'];
             foreach ($required as $field) {
                 if (empty($input[$field])) {
@@ -95,18 +89,14 @@ class ProductController
                 }
             }
 
-            // Numeric validation
             if (!is_numeric($input['price']) || $input['price'] <= 0) {
                 $this->jsonResponse(['error' => 'Invalid price format'], 400);
             }
 
-            // Process image if present
             if (isset($input['image'])) {
-                // Handle file upload from form data
                 if (is_array($input['image'])) {
                     $input['image'] = $input['image']['tmp_name'];
                 }
-                // For base64 images from JSON
                 elseif ($isJson && preg_match('/^data:image\/(\w+);base64,/', $input['image'], $matches)) {
                     $input['image'] = $this->handleBase64Image($input['image']);
                 }
@@ -133,13 +123,11 @@ class ProductController
     private function handleBase64Image($base64Image)
     {
         try {
-            // Extract image type and data
             list($type, $data) = explode(';', $base64Image);
             list(, $data) = explode(',', $data);
             $data = base64_decode($data);
             $extension = explode('/', $type)[1];
 
-            // Create temporary file
             $tempPath = tempnam(sys_get_temp_dir(), 'img') . '.' . $extension;
             file_put_contents($tempPath, $data);
 
@@ -151,29 +139,23 @@ class ProductController
 
     public function updateProduct($id) {
         try {
-            // Handle both 'category' and 'categoryId' for backward compatibility
             if (isset($_POST['category']) && !isset($_POST['categoryId'])) {
                 $_POST['categoryId'] = $_POST['category'];
             }
-            // Determine input type
             $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
             $isJson = strpos($contentType, 'application/json') !== false;
             $isMultipart = strpos($contentType, 'multipart/form-data') !== false;
 
-            // Initialize input array
             $input = [];
 
             if ($isJson) {
-                // Handle JSON input
                 $input = json_decode(file_get_contents('php://input'), true);
                 if (json_last_error() !== JSON_ERROR_NONE) {
                     $this->jsonResponse(['error' => 'Invalid JSON format'], 400);
                 }
             } elseif ($isMultipart) {
-                // Handle form data input
                 $input = $_POST;
 
-                // Handle file upload
                 if (!empty($_FILES['image']['tmp_name'])) {
                     $input['image'] = $_FILES['image']['tmp_name'];
                 }
@@ -181,12 +163,10 @@ class ProductController
                 $this->jsonResponse(['error' => 'Unsupported content type'], 415);
             }
 
-            // Handle both 'category' and 'categoryId' for backward compatibility
             if (isset($input['category']) && !isset($input['categoryId'])) {
                 $input['categoryId'] = $input['category'];
             }
 
-            // Validate required fields
             $required = ['name', 'price'];
             foreach ($required as $field) {
                 if (empty($input[$field])) {
@@ -196,19 +176,16 @@ class ProductController
                 }
             }
 
-            // Check if categoryId exists in some form
             if (empty($input['categoryId'])) {
                 $this->jsonResponse([
                     'error' => 'Missing required field: categoryId'
                 ], 400);
             }
 
-            // Numeric validation
             if (!is_numeric($input['price']) || $input['price'] <= 0) {
                 $this->jsonResponse(['error' => 'Invalid price format'], 400);
             }
 
-            // Process image if present for JSON requests
             if (isset($input['image']) && $isJson && !is_string($input['image']['tmp_name'] ?? null)) {
                 if (preg_match('/^data:image\/(\w+);base64,/', $input['image'], $matches)) {
                     $input['image'] = $this->handleBase64Image($input['image']);
@@ -225,7 +202,6 @@ class ProductController
                 'updatedAt' => date('Y-m-d H:i:s')
             ];
 
-            // Add image path if available
             if (isset($input['image'])) {
                 $data['image'] = $input['image'];
             }
@@ -253,18 +229,14 @@ class ProductController
         try {
             $result = $this->productService->deleteProduct($id);
             if ($result) {
-                // 204 No Content should not include a response body
                 return $this->jsonResponse([], 204);
             } else {
-                // Assuming the product wasn't found; adjust status code as needed
                 return $this->jsonResponse(['error' => 'Product not found'], 404);
             }
         } catch (Exception $e) {
-            // Log the exception here (optional)
-            // Avoid exposing internal errors in production
             return $this->jsonResponse([
                 'error' => 'Failed to delete product',
-                // 'message' => $e->getMessage() // Only include in development
+                'message' => $e->getMessage()
             ], 500);
         }
     }

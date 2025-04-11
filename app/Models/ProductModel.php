@@ -67,7 +67,6 @@ class ProductModel
 
     public function updateProduct($data) {
         try {
-            // Build the query with conditional image update
             $query = "UPDATE $this->tableName 
             SET name = :name, price = :price, description = :description, 
                 quantity = :quantity, categoryId = :categoryId, updatedAt = :updatedAt,
@@ -81,7 +80,6 @@ class ProductModel
             
             $stmt = $this->db->prepare($query);
             
-            // Bind parameters with explicit types
             $stmt->bindParam(':name', $data['name'], PDO::PARAM_STR);
             $stmt->bindParam(':price', $data['price'], PDO::PARAM_STR); // DECIMAL as string
             $stmt->bindParam(':description', $data['description'], PDO::PARAM_STR);

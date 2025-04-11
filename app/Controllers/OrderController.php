@@ -68,35 +68,48 @@ class OrderController
     }
 
     // method to update order status
-    public function updateStatus($params)
+    public function updateStatus($id)
     {
-        $orderId = $params['id'];
-        $status = $params['status'];
-        
-        $order = $this->orderService->getOrderById($orderId);
+        // $orderId = $params['id'];
+        // $status = $params['status'];
+        $data = json_decode(file_get_contents('php://input'), true);
+
+        $order = $this->orderService->getOrderById($id);
+        if (!isset($data['status'])) {
+            http_response_code(400);
+            echo json_encode(["error" => "Missing status parameter"]);
+            return;
+        }
+
         if (!$order) {
             echo json_encode(["status" => "error", "message" => "Order not found"]);
             return;
         }
 
-        $response = $this->orderService->updateOrderStatus($orderId, $status);
+       $response = $this->orderService->updateOrderStatus($id, $data['status']);
 
         echo json_encode($response);
     }
 
     // method to cancel an order (replaces delete)
-    public function cancel($params)
+    public function cancel($id)
     {
-        $orderId = $params['id'];
+        $data = json_decode(file_get_contents('php://input'), true);
+       // $orderId = $params['id'];
 
-        $order = $this->orderService->getOrderById($orderId);
+        $order = $this->orderService->getOrderById($id);
+        if (!isset($data['status'])) {
+            http_response_code(400);
+            echo json_encode(["error" => "Missing status parameter"]);
+            return;
+        }
         if (!$order) {
             echo json_encode(["status" => "error", "message" => "Order not found"]);
             return;
         }
 
         // connect to the service to cancel the order
-        $response = $this->orderService->cancelOrder($orderId);
+        $response = $this->orderService->cancelOrder($id);
 
         // send the response
         echo json_encode($response);

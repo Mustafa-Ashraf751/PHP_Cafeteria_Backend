@@ -20,6 +20,8 @@ ini_set('display_errors', 1);
 
 
 $router = require __DIR__ . '/../app/router.php';
-
 $router->dispatch();
+
+
+
 

@@ -6,11 +6,9 @@ use App\Controllers\CategoryController;
 use App\Controllers\ProductController;
 use App\Routers\Router;
 use App\Controllers\UserController;
+use App\Services\CategoryService;
 
 $router = new Router("/PHP_Cafeteria_Backend/public");
-
-
-
 
 //Public routes
 $router->post('/login', UserController::class, 'login');
@@ -33,7 +31,6 @@ $router->get('/categories', CategoryController::class, 'getCategories');
 $router->post('/categories', CategoryController::class, 'addCategory');
 $router->put('/categories/{id}', CategoryController::class, 'updateCategory');
 $router->delete('/categories/{id:\d+}', CategoryController::class, 'deleteCategoryById');
-
 // Admin only routes
 $router->get('/admin/users', UserController::class, 'index');  
 $router->post('/admin/users', UserController::class, 'register');

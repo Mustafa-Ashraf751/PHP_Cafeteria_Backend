@@ -13,24 +13,19 @@ class Order
     public function __construct()
     {
         $this->db = DataBase::getDBConnection();
+        $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
 
     public function createOrder($userId, $roomId, $totalAmount, $notes = null)
     {
         try {
             $sql = "INSERT INTO orders (user_id, room_id, total_amount, notes, order_status) 
-                    VALUES (:user_id, :room_id, :total_amount, :notes, :order_status)";
+                   VALUES (:user_id, :room_id, :total_amount, :notes, :order_status)";
             $stmt = $this->db->prepare($sql);
-            if ($stmt->execute([$userId, $roomId, $totalAmount, $notes])) {
-                echo json_encode(["status" => "success", "message" => "Order created successfully."]);
-            } else {
-                echo json_encode(["status" => "error", "message" => "Failed to insert order", "error" => $stmt->errorInfo()]);
-            }
-    
-            
+        
             $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
             $stmt->bindParam(':room_id', $roomId, PDO::PARAM_INT);
-            $stmt->bindParam(':total_amount', $totalAmount);
+            $stmt->bindParam(':total_amount', $totalAmount, PDO::PARAM_STR);
             $stmt->bindParam(':notes', $notes, $notes !== null ? PDO::PARAM_STR : PDO::PARAM_NULL);
             
             $orderStatus = 'pending';

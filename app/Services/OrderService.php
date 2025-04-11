@@ -19,8 +19,14 @@ class OrderService
     {
         try {
             // add order by use Model Order
-            $this->orderModel->createOrder($userId, $roomId, $totalAmount, $notes);
-            return ['status' => 'success', 'message' => 'Order created successfully.'];
+            $orderId = $this->orderModel->createOrder($userId, $roomId, $totalAmount, $notes);
+
+            if ($orderId) {
+                return ['status' => 'success', 'message' => 'Order created successfully from if().', 'orderId' => $orderId];
+            } else {
+                return ['status' => 'error', 'message' => 'Failed to create order in database.'];
+            }
+          
         } catch (Exception $e) {
             return ['status' => 'error', 'message' => 'Failed to create order: ' . $e->getMessage()];
         }

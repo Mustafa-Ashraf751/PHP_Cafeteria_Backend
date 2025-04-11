@@ -7,13 +7,15 @@ use App\Controllers\ProductController;
 use App\Routers\Router;
 use App\Controllers\UserController;
 
-$router = new Router("/ITI/PHP_Cafeteria_Backend/public");
+$router = new Router("/PHP_Cafeteria_Backend/public");
+
+
+
 
 //Public routes
 $router->post('/login', UserController::class, 'login');
 
 
-// Define routes for user management
 $router->get('/users', UserController::class, 'index');
 $router->get('/users/{id}', UserController::class, 'show');
 $router->post('/users', UserController::class, 'store');
@@ -24,7 +26,7 @@ $router->delete('/users/{id}', UserController::class, 'delete');
 $router->get('/products', ProductController::class, 'getAllProducts');
 $router->get('/products/{id}', ProductController::class, 'getProductById');
 $router->post('/products', ProductController::class, 'addProduct');
-$router->patch('/products/{id}', ProductController::class, 'updateProduct');
+$router->post('/products/{id}', ProductController::class, 'updateProduct');
 $router->delete('/products/{id}', ProductController::class, 'deleteProduct');
 // Define routes for category management
 $router->get('/categories', CategoryController::class, 'getCategories');

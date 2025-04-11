@@ -24,10 +24,10 @@ class ProductModel
                   LEFT JOIN categories 
                     ON products.categoryId = categories.id";
 
-    $stmt = $this->db->prepare($query);
-    $stmt->execute();
-    return $stmt->fetchAll(\PDO::FETCH_ASSOC);
-  }
+        $stmt = $this->db->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
 
   public function getProductById($id)
   {
@@ -38,57 +38,72 @@ class ProductModel
     return $stmt->fetch(\PDO::FETCH_ASSOC);
   }
 
-  public function addProduct($data)
-  {
-    try {
-      $query = "INSERT INTO $this->tableName 
+    public function addProduct($data)
+    {
+        try {
+            $query = "INSERT INTO $this->tableName 
                   (name, price, description, quantity, categoryId, image, createdAt, updatedAt) 
                   VALUES 
                   (:name, :price, :description, :quantity, :categoryId, :image, :createdAt, :updatedAt)";
 
-      $stmt = $this->db->prepare($query);
+            $stmt = $this->db->prepare($query);
 
-      // Bind parameters with explicit types
-      $stmt->bindParam(':name', $data['name'], PDO::PARAM_STR);
-      $stmt->bindParam(':price', $data['price'], PDO::PARAM_STR); // DECIMAL as string
-      $stmt->bindParam(':description', $data['description'], PDO::PARAM_STR);
-      $stmt->bindParam(':quantity', $data['quantity'], PDO::PARAM_INT);
-      $stmt->bindParam(':categoryId', $data['categoryId'], PDO::PARAM_INT);
-      $stmt->bindParam(':image', $data['image'], PDO::PARAM_STR);
-      $stmt->bindParam(':createdAt', $data['createdAt'], PDO::PARAM_STR);
-      $stmt->bindParam(':updatedAt', $data['updatedAt'], PDO::PARAM_STR);
+            // Bind parameters with explicit types
+            $stmt->bindParam(':name', $data['name'], PDO::PARAM_STR);
+            $stmt->bindParam(':price', $data['price'], PDO::PARAM_STR); // DECIMAL as string
+            $stmt->bindParam(':description', $data['description'], PDO::PARAM_STR);
+            $stmt->bindParam(':quantity', $data['quantity'], PDO::PARAM_INT);
+            $stmt->bindParam(':categoryId', $data['categoryId'], PDO::PARAM_INT);
+            $stmt->bindParam(':image', $data['image'], PDO::PARAM_STR);
+            $stmt->bindParam(':createdAt', $data['createdAt'], PDO::PARAM_STR);
+            $stmt->bindParam(':updatedAt', $data['updatedAt'], PDO::PARAM_STR);
 
-      return $stmt->execute();
-    } catch (PDOException $e) {
-      error_log("Product insertion error: " . $e->getMessage());
-      return false;
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("Product insertion error: " . $e->getMessage());
+            return false;
+        }
     }
-  }
 
-  public function updateProduct($data)
-  {
-    $query = "UPDATE $this->tableName 
-                  SET name = :name, price = :price, description = :description, quantity = :quantity, 
-                      categoryId = :categoryId, image = :image, updatedAt = :updatedAt 
-                  WHERE id = :id";
-    $stmt = $this->db->prepare($query);
-    $stmt->bindParam(':name', $data['name']);
-    $stmt->bindParam(':price', $data['price']);
-    $stmt->bindParam(':description', $data['description']);
-    $stmt->bindParam(':quantity', $data['quantity']);
-    $stmt->bindParam(':categoryId', $data['categoryId']);
-    $stmt->bindParam(':image', $data['image']);
-    $stmt->bindParam(':updatedAt', $data['updatedAt']);
-    $stmt->bindParam(':id', $data['id']);
+    public function updateProduct($data) {
+        try {
+            $query = "UPDATE $this->tableName 
+            SET name = :name, price = :price, description = :description, 
+                quantity = :quantity, categoryId = :categoryId, updatedAt = :updatedAt,
+                status = CASE WHEN :quantity <= 0 THEN 'unavailable' ELSE 'available' END";
+            
+            if (isset($data['image'])) {
+                $query .= ", image = :image";
+            }
+            
+            $query .= " WHERE id = :id";
+            
+            $stmt = $this->db->prepare($query);
+            
+            $stmt->bindParam(':name', $data['name'], PDO::PARAM_STR);
+            $stmt->bindParam(':price', $data['price'], PDO::PARAM_STR); // DECIMAL as string
+            $stmt->bindParam(':description', $data['description'], PDO::PARAM_STR);
+            $stmt->bindParam(':quantity', $data['quantity'], PDO::PARAM_INT);
+            $stmt->bindParam(':categoryId', $data['categoryId'], PDO::PARAM_INT);
+            $stmt->bindParam(':updatedAt', $data['updatedAt'], PDO::PARAM_STR);
+            $stmt->bindParam(':id', $data['id'], PDO::PARAM_INT);
+            
+            if (isset($data['image'])) {
+                $stmt->bindParam(':image', $data['image'], PDO::PARAM_STR);
+            }
+            
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("Product update error: " . $e->getMessage());
+            return false;
+        }
+    }
 
-    return $stmt->execute();
-  }
-
-  public function deleteProduct($id)
-  {
-    $query = "DELETE FROM $this->tableName WHERE id = :id";
-    $stmt = $this->db->prepare($query);
-    $stmt->bindParam(':id', $id);
-    return $stmt->execute();
-  }
+    public function deleteProduct($id)
+    {
+        $query = "DELETE FROM $this->tableName WHERE id = :id";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':id', $id);
+        return $stmt->execute();
+    }
 }

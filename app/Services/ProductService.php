@@ -5,6 +5,7 @@ namespace App\Services;
 use Cloudinary\Cloudinary;
 use Dotenv\Dotenv;
 use App\Models\ProductModel;
+use Exception;
 
 class ProductService
 {
@@ -72,32 +73,61 @@ class ProductService
     return $this->productModel->addProduct($productData);
   }
 
-  public function updateProduct($data)
-  {
-    $productData = [
-      'id' => $data['id'],
-      'name' => $data['name'],
-      'price' => $data['price'],
-      'description' => $data['description'],
-      'quantity' => $data['quantity'],
-      'categoryId' => $data['categoryId'],
-      'updatedAt' => date('Y-m-d H:i:s')
-    ];
-
-    if (!empty($data['image_path'])) {
-      $uploadResult = $this->cloudinary->uploadApi()->upload($data['image_path'], [
-        'folder' => 'products',
-      ]);
-      $productData['image'] = $uploadResult['secure_url'];
-    } else {
-      $productData['image'] = $data['image'];
+    public function updateProduct($data) {
+        try {
+            // Validate required fields
+            if (empty($data['id']) || empty($data['name']) || empty($data['price']) || empty($data['categoryId'])) {
+                throw new Exception('Product ID, name, price, and category ID are required');
+            }
+    
+            // Get existing product
+            $existingProduct = $this->productModel->getProductById($data['id']);
+            if (!$existingProduct) {
+                throw new Exception('Product not found');
+            }
+    
+            // Prepare update data
+            $updateData = [
+                'id' => $data['id'],
+                'name' => $data['name'],
+                'price' => number_format((float)$data['price'], 2),
+                'categoryId' => (int)$data['categoryId'],
+                'description' => $data['description'] ?? $existingProduct['description'] ?? '',
+                'quantity' => (int)($data['quantity'] ?? $existingProduct['quantity'] ?? 0),
+                'updatedAt' => date('Y-m-d H:i:s')
+            ];
+    
+            // Handle image upload if provided
+            if (!empty($data['image'])) {
+                try {
+                    $uploadResult = $this->cloudinary->uploadApi()->upload($data['image'], [
+                        'folder' => 'products',
+                        'resource_type' => 'image'
+                    ]);
+                    $updateData['image'] = $uploadResult['secure_url'];
+                } catch (\Exception $e) {
+                    throw new \RuntimeException('Image upload failed: ' . $e->getMessage());
+                }
+            }
+    
+            // Update the product in the database
+            $success = $this->productModel->updateProduct($updateData);
+            
+            if (!$success) {
+                throw new Exception('Database update failed');
+            }
+            
+            // Return updated product
+            return $this->productModel->getProductById($data['id']);
+            
+        } catch (Exception $e) {
+            throw new Exception('Update failed: ' . $e->getMessage());
+        }
     }
 
-    return $this->productModel->updateProduct($productData);
-  }
-
-  public function deleteProduct($id)
-  {
-    return $this->productModel->deleteProduct($id);
-  }
-}
+    public function deleteProduct($id)
+    {
+        return $this->productModel->deleteProduct($id);
+    }
+    
+}   

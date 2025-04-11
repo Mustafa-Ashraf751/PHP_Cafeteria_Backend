@@ -1,6 +1,5 @@
 <?php
 
-// Load dependencies
 require __DIR__ . '/../vendor/autoload.php';
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Credentials: true");
@@ -21,8 +20,6 @@ ini_set('display_errors', 1);
 
 
 $router = require __DIR__ . '/../app/router.php';
+
 $router->dispatch();
-
-
-
 

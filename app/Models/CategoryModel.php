@@ -67,7 +67,7 @@ class CategoryModel
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
 
-        // Return true only if a row was actually deleted
+        
         return $stmt->rowCount() > 0;
 
     } catch (PDOException $e) {

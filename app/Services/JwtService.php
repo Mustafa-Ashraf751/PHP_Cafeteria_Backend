@@ -22,7 +22,7 @@ class JwtService
     {
         $issuedAt = time();
         $expirationTime = $issuedAt + 3600 * 24;
-        
+
         $payload = [
             'iat' => $issuedAt,
             'exp' => $expirationTime,
@@ -32,10 +32,10 @@ class JwtService
                 'role' => $userData['role']
             ]
         ];
-        
+
         return JWT::encode($payload, $this->secretKey, $this->algorithm);
     }
-    
+
     public function verify($token)
     {
         try {

@@ -6,12 +6,17 @@ use App\Controllers\CategoryController;
 use App\Controllers\ProductController;
 use App\Routers\Router;
 use App\Controllers\UserController;
+
+use App\Controllers\OrderController;
+$router = new Router('/PHP_Cafeteria_Backend/public');
+
 use App\Services\CategoryService;
 
-$router = new Router("/PHP_Cafeteria_Backend/public");
+
 
 //Public routes
 $router->post('/login', UserController::class, 'login');
+
 
 
 $router->get('/users', UserController::class, 'index');
@@ -35,6 +40,15 @@ $router->delete('/categories/{id:\d+}', CategoryController::class, 'deleteCatego
 $router->get('/admin/users', UserController::class, 'index');  
 $router->post('/admin/users', UserController::class, 'register');
 $router->delete('/admin/users/{id}', UserController::class, 'delete'); 
+
+// Define routes for orders
+$router->get('/orders', OrderController::class, 'index');  // List all orders
+$router->get('/orders/{id}', OrderController::class, 'show'); // Get a single order by ID
+$router->post('/orders', OrderController::class, 'store');  // Create a new order
+$router->patch('/orders/{id}/status', OrderController::class, 'updateStatus');  // Update order status
+$router->patch('/orders/{id}/cancel', OrderController::class, 'cancel');  // Cancel an order (replaces delete)
+
+
 
 // Handle 404 errors
 $router->setNotFoundHandler(function () {

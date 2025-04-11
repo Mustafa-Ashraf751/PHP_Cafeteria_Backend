@@ -1,3 +1,10 @@
+# <IfModule mod_rewrite.c>
+#     RewriteEngine On
+#     # Handle Front Controller Pattern
+#     RewriteCond %{REQUEST_FILENAME} !-f
+#     RewriteCond %{REQUEST_FILENAME} !-d
+#     RewriteRule ^ index.php [QSA,L]
+# </IfModule> 
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /PHP_Cafeteria_Backend/public/

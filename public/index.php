@@ -1,6 +1,12 @@
 <?php
 
-// Load dependencies
+// Immediately handle OPTIONS requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    header("HTTP/1.1 200 OK");
+    exit();
+}
+
+// Now load dependencies
 require __DIR__ . '/../vendor/autoload.php';
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Credentials: true");

@@ -33,7 +33,4 @@ function uploadToCloudinary($filePath)
 
     return $result['secure_url']; 
 }
-
-/* $imagePath = __DIR__ . '/../ChatGPT Image Apr 1, 2025, 02_40_12 AM.png'; 
-$imageUrl = uploadToCloudinary($imagePath);
-echo "Uploaded Image URL: " . $imageUrl; */
+*/

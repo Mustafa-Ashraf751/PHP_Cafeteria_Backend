@@ -18,6 +18,10 @@ class OrderService
     public function createOrder($userId, $roomId, $totalAmount, $notes = null)
     {
         try {
+            if (empty($userId) || empty($roomId) || empty($totalAmount)) {
+                return ['status' => 'error', 'message' => 'Invalid order data.'];
+            }
+
             // add order by use Model Order
             $orderId = $this->orderModel->createOrder($userId, $roomId, $totalAmount, $notes);
 
@@ -46,27 +50,44 @@ class OrderService
     public function getOrderById($id)
     {
         try {
-            return $this->orderModel->getOrderById($id);
+            $order = $this->orderModel->getOrderById($id);
+            
+            // Check if the order exists
+            if (isset($order['status']) && $order['status'] === 'error') {
+                return null;
+            }
+    
+            return $order;
         } catch (Exception $e) {
-            return ['status' => 'error', 'message' => 'Failed to fetch order: ' . $e->getMessage()];
+            return ['status' => 'error', 'message' => 'Failed to fetch order'];
         }
     }
 
     // update order status
-    public function updateOrderStatus($id, $orderStatus)
+   public function updateOrderStatus($id, $orderStatus)
     {
-        try {
-            $this->orderModel->updateOrderStatus($id, $orderStatus);
-            return ['status' => 'success', 'message' => 'Order status updated successfully.'];
-        } catch (Exception $e) {
-            return ['status' => 'error', 'message' => 'Failed to update order status: ' . $e->getMessage()];
+         try {
+        $order = $this->orderModel->getOrderById($id);
+         if (!$order) {
+            return ['status' => 'error', 'message' => 'Order not found.'];
         }
+
+            $this->orderModel->updateOrderStatus($id, $orderStatus);
+         return ['status' => 'success', 'message' => 'Order status updated successfully.'];
+         } catch (Exception $e) {
+         return ['status' => 'error', 'message' => 'Failed to update order status: ' . $e->getMessage()];
+         }
     }
 
     // cancel order (replaces delete)
     public function cancelOrder($id)
     {
         try {
+            $order = $this->orderModel->getOrderById($id);
+            if (!$order) {
+                return ['status' => 'error', 'message' => 'Order not found.'];
+            }
+    
             $this->orderModel->cancelOrder($id);
             return ['status' => 'success', 'message' => 'Order cancelled successfully.'];
         } catch (Exception $e) {

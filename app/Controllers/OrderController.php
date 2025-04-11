@@ -19,7 +19,11 @@ class OrderController
     {
         // get data from request body
         $data = json_decode(file_get_contents('php://input'), true);
-        
+        // check if data is valid
+        if (!isset($data['user_id'], $data['room_id'], $data['total_amount'])) {
+            echo json_encode(['status' => 'error', 'message' => 'Missing required fields']);
+            return;
+        }
         // extract individual values
         $userId = $data['user_id'];
         $roomId = $data['room_id'];  // Changed from 'room' to 'room_id'
@@ -42,12 +46,24 @@ class OrderController
     }
 
     // method to show a single order
-    public function show($params)
+    public function show($id) 
     {
-        $orderId = $params['id'];
-
-        $order = $this->orderService->getOrderById($orderId);
-
+        
+        if (!is_numeric($id) || $id <= 0) {
+            http_response_code(400);
+            echo json_encode(["error" => "Invalid order ID format"]);
+            return;
+        }
+    
+        $order = $this->orderService->getOrderById((int)$id);
+        
+        if (!$order || (isset($order['status']) && $order['status'] === 'error')) {
+            http_response_code(404);
+            echo json_encode(["error" => "Order with ID $id not found"]);
+            return;
+        }
+    
+        http_response_code(200);
         echo json_encode($order);
     }
 
@@ -56,6 +72,12 @@ class OrderController
     {
         $orderId = $params['id'];
         $status = $params['status'];
+        
+        $order = $this->orderService->getOrderById($orderId);
+        if (!$order) {
+            echo json_encode(["status" => "error", "message" => "Order not found"]);
+            return;
+        }
 
         $response = $this->orderService->updateOrderStatus($orderId, $status);
 
@@ -66,6 +88,12 @@ class OrderController
     public function cancel($params)
     {
         $orderId = $params['id'];
+
+        $order = $this->orderService->getOrderById($orderId);
+        if (!$order) {
+            echo json_encode(["status" => "error", "message" => "Order not found"]);
+            return;
+        }
 
         // connect to the service to cancel the order
         $response = $this->orderService->cancelOrder($orderId);

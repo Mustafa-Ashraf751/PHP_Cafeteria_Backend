@@ -61,21 +61,44 @@ class Order
     public function getOrderById($id)
     {
         try {
-            $sql = "SELECT * FROM orders WHERE id = :id";
+            $id = intval($id);
+
+            if (!is_numeric($id) || $id <= 0) {
+                return ['status' => 'error', 'message' => 'Invalid order ID'];
+            }
+
+            $sql = "SELECT * FROM orders WHERE id = :id LIMIT 1";
             $stmt = $this->db->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+           
+            error_log("SQL Query: " . $sql); 
             $stmt->execute();
-            
-            return $stmt->fetch(PDO::FETCH_ASSOC);
+    
+            $order = $stmt->fetch(PDO::FETCH_ASSOC);
+           // var_dump($order);
+            // Check if the order exists
+            if (!$order || !is_array($order)) {
+                return ['status' => 'error', 'message' => 'Order not found'];
+            }
+            if(empty($order['id'])) {
+                return ['status' => 'error', 'message' => 'Invalid order data'];
+            }
+    
+            return $order;
         } catch (PDOException $e) {
             error_log("Error in getOrderById: " . $e->getMessage());
-            return null;
+            return ['status' => 'error', 'message' => 'Database error occurred'];
         }
     }
+    
 
     public function updateOrderStatus($id, $orderStatus)
     {
         try {
+            if (!$this->getOrderById($id)) {
+                return false;
+            }
+
             $sql = "UPDATE orders SET order_status = :order_status WHERE id = :id";
             $stmt = $this->db->prepare($sql);
             $stmt->bindParam(':order_status', $orderStatus, PDO::PARAM_STR);
@@ -91,6 +114,10 @@ class Order
     public function cancelOrder($id)
     {
         try {
+            if (!$this->getOrderById($id)) {
+                return false;
+            }
+
             $sql = "UPDATE orders SET order_status = 'Cancelled' WHERE id = :id";
             $stmt = $this->db->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);

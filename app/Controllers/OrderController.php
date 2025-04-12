@@ -46,23 +46,23 @@ class OrderController
     }
 
     // method to show a single order
-    public function show($id) 
+    public function show($id)
     {
-        
+
         if (!is_numeric($id) || $id <= 0) {
             http_response_code(400);
             echo json_encode(["error" => "Invalid order ID format"]);
             return;
         }
-    
+
         $order = $this->orderService->getOrderById((int)$id);
-        
+
         if (!$order || (isset($order['status']) && $order['status'] === 'error')) {
             http_response_code(404);
             echo json_encode(["error" => "Order with ID $id not found"]);
             return;
         }
-    
+
         http_response_code(200);
         echo json_encode($order);
     }
@@ -86,7 +86,7 @@ class OrderController
             return;
         }
 
-       $response = $this->orderService->updateOrderStatus($id, $data['status']);
+        $response = $this->orderService->updateOrderStatus($id, $data['status']);
 
         echo json_encode($response);
     }
@@ -95,7 +95,7 @@ class OrderController
     public function cancel($id)
     {
         $data = json_decode(file_get_contents('php://input'), true);
-       // $orderId = $params['id'];
+        // $orderId = $params['id'];
 
         $order = $this->orderService->getOrderById($id);
         if (!isset($data['status'])) {
@@ -112,6 +112,21 @@ class OrderController
         $response = $this->orderService->cancelOrder($id);
 
         // send the response
+        echo json_encode($response);
+    }
+
+    public function getUserOrders($userId)
+    {
+        //Handle the Authorization later
+
+        $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
+        $endDate = isset($_GET['end_date']) ? $_GET['end_date'] : '';
+
+        $response = $this->orderService->getOrderByUserAndDate($userId, $startDate, $endDate);
+        $statusCode = $response['status'] === 'success' ? 200 : 500;
+        http_response_code($statusCode);
+
+        // Send response
         echo json_encode($response);
     }
 }

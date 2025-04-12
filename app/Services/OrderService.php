@@ -15,7 +15,7 @@ class OrderService
     }
 
     // create order
-    public function createOrder($userId, $roomId, $totalAmount, $notes = null)
+    public function createOrder($userId, $roomId, $totalAmount, $notes ,$orderItems)
     {
         try {
             if (empty($userId) || empty($roomId) || empty($totalAmount)) {
@@ -23,7 +23,7 @@ class OrderService
             }
 
             // add order by use Model Order
-            $orderId = $this->orderModel->createOrder($userId, $roomId, $totalAmount, $notes);
+            $orderId = $this->orderModel->createOrder($userId, $roomId, $totalAmount, $notes,$orderItems);
 
             if ($orderId) {
                 return ['status' => 'success', 'message' => 'Order created successfully from if().', 'orderId' => $orderId];
@@ -32,6 +32,8 @@ class OrderService
             }
           
         } catch (Exception $e) {
+            error_log("Order Items received in ServiceOrder: " . print_r($orderItems, true));
+
             return ['status' => 'error', 'message' => 'Failed to create order: ' . $e->getMessage()];
         }
     }
@@ -40,7 +42,13 @@ class OrderService
     public function getAllOrders()
     {
         try {
-            return $this->orderModel->getAllOrders();
+            $orders = $this->orderModel->getAllOrders();
+    
+            if (!$orders) {
+                return ['status' => 'error', 'message' => 'No orders found'];
+            }
+    
+            return ['status' => 'success', 'orders' => $orders];
         } catch (Exception $e) {
             return ['status' => 'error', 'message' => 'Failed to fetch orders: ' . $e->getMessage()];
         }
@@ -78,6 +86,28 @@ class OrderService
          return ['status' => 'error', 'message' => 'Failed to update order status: ' . $e->getMessage()];
          }
     }
+
+    public function getOrderDetails($orderId)
+{
+    try {
+        
+        if (empty($orderId) || !is_numeric($orderId) || $orderId <= 0) {
+            return ['status' => 'error', 'message' => 'Invalid order ID'];
+        }
+
+       
+        $orderDetails = $this->orderModel->getOrderDetails($orderId);
+        
+        if (!$orderDetails || isset($orderDetails['status']) && $orderDetails['status'] === 'error') {
+            return ['status' => 'error', 'message' => 'Order details not found'];
+        }
+
+        return ['status' => 'success', 'orderDetails' => $orderDetails];
+    } catch (Exception $e) {
+        return ['status' => 'error', 'message' => 'Failed to fetch order details: ' . $e->getMessage()];
+    }
+}
+
 
     // cancel order (replaces delete)
     public function cancelOrder($id)

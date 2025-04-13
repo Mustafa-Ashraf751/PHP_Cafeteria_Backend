@@ -45,6 +45,7 @@ $router->delete('/admin/users/{id}', UserController::class, 'delete');
 // Define routes for orders
 $router->get('/orders', OrderController::class, 'index');  // List all orders
 $router->get('/users/{userId}/orders', OrderController::class, 'getUserOrders'); // Get the user order with date range
+$router->get('/users-with-orders', OrderController::class, 'getUsersWithOrders'); // Get all users who make orders
 $router->get('/orders/{id}', OrderController::class, 'show'); // Get a single order by ID
 $router->post('/orders', OrderController::class, 'store');  // Create a new order
 $router->patch('/orders/{id}/status', OrderController::class, 'updateStatus');  // Update order status

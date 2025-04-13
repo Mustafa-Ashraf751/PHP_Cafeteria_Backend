@@ -119,20 +119,90 @@ class OrderService
             }
 
             // Get orders from model
-            $orders = $this->orderModel->getOrdersByUserAndDateRange($userId, $startDate, $endDate);
+            $result = $this->orderModel->getOrdersByUserAndDateRange($userId, $startDate, $endDate);
 
-            if (!$orders) {
+            if (empty($result['orders'])) {
                 return [
-                    'status' => 'error',
+                    'status' => 'success',
+                    'data' => [],
+                    'summary' => [
+                        'total_orders' => 0,
+                        'total_amount' => 0
+                    ],
                     'message' => 'No orders found with this user try again'
                 ];
             }
 
-            return ['status' => 'success', 'data' => $orders];
+            return [
+                'status' => 'success',
+                'data' => [],
+                'summary' => [
+                    'total_orders' => $result['count'],
+                    'total_amount' => $result['total_amount']
+                ],
+            ];
         } catch (Exception $e) {
             return [
                 'status' => 'error',
                 'message' => 'Failed to fetch orders: ' . $e->getMessage()
+            ];
+        }
+    }
+
+
+
+    public function getAllUsersWithOrderSummary($page = 1, $perPage = 10, $startDate = null, $endDate = null)
+    {
+        try {
+            // Validate pagination parameters
+            $page = max(1, (int)$page);
+            $perPage = max(1, min(100, (int)$perPage));
+
+            // Validate date formats if provided
+            if ($startDate && !strtotime($startDate)) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Invalid start date format. Use YYYY-MM-DD'
+                ];
+            }
+
+            if ($endDate && !strtotime($endDate)) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Invalid end date format. Use YYYY-MM-DD'
+                ];
+            }
+
+            // Get paginated data from model
+            $result = $this->orderModel->getAllUsersWithOrderSummary($page, $perPage, $startDate, $endDate);
+
+            if (empty($result['data'])) {
+                return [
+                    'status' => 'success',
+                    'data' => [],
+                    'message' => 'No users with orders found',
+                    'pagination' => [
+                        'page' => $page,
+                        'per_page' => $perPage,
+                        'total_items' => 0,
+                        'total_pages' => 0
+                    ]
+                ];
+            }
+
+            return [
+                'status' => 'success',
+                'data' => $result['data'],
+                'pagination' => $result['pagination'],
+                'filters' => [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate
+                ]
+            ];
+        } catch (Exception $e) {
+            return [
+                'status' => 'error',
+                'message' => 'Failed to fetch users with order summary: ' . $e->getMessage()
             ];
         }
     }

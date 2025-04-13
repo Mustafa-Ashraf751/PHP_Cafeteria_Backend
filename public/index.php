@@ -1,7 +1,7 @@
 <?php
 
 require __DIR__ . '/../vendor/autoload.php';
-header("Access-Control-Allow-Origin: *");
+//header("Access-Control-Allow-Origin: http://localhost:5173");
 header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET, POST, PATCH, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
@@ -21,7 +21,3 @@ ini_set('display_errors', 1);
 
 $router = require __DIR__ . '/../app/router.php';
 $router->dispatch();
-
-
-
-

@@ -4,14 +4,47 @@ namespace App\Controllers;
 
 use App\Services\OrderService;
 use Exception;
+use App\Services\JwtService;
 
 class OrderController
 {
     private $orderService;
+    private $jwtService;
 
     public function __construct()
     {
         $this->orderService = new OrderService();
+        $this->jwtService = new JwtService();
+    }
+
+    private function jsonResponse($data, $statusCode = 200)
+    {
+        http_response_code($statusCode);
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        exit;
+    }
+
+    //Refactor code later and create middleware to handle the auth logic
+    private function authenticateAdmin()
+    {
+        $headers = getallheaders();
+        if (!isset($headers['Authorization'])) {
+            $this->jsonResponse(['error' => 'Authorization header missing'], 401);
+        }
+
+        try {
+            $token = str_replace('Bearer ', '', $headers['Authorization']);
+            $decoded = $this->jwtService->verify($token);
+
+            if (!isset($decoded->data->role) || $decoded->data->role !== 'admin') {
+                $this->jsonResponse(['error' => 'Access denied. Admin privileges required'], 403);
+            }
+
+            return $decoded;
+        } catch (Exception $e) {
+            $this->jsonResponse(['error' => 'Invalid token: ' . $e->getMessage()], 401);
+        }
     }
 
     // method to create a new order
@@ -117,6 +150,7 @@ class OrderController
 
     public function getUserOrders($userId)
     {
+        $this->authenticateAdmin();
         //Handle the Authorization later
 
         $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
@@ -128,5 +162,26 @@ class OrderController
 
         // Send response
         echo json_encode($response);
+    }
+
+
+    public function getUsersWithOrders()
+    {
+        // Only allow admins to access this endpoint
+        $this->authenticateAdmin();
+
+        // Get pagination parameters
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $perPage = isset($_GET['per_page']) ? (int)$_GET['per_page'] : 10;
+
+        // Get date filters
+        $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : null;
+        $endDate = isset($_GET['end_date']) ? $_GET['end_date'] : null;
+
+        // Get users with orders summary
+        $response = $this->orderService->getAllUsersWithOrderSummary($page, $perPage, $startDate, $endDate);
+
+        // Send response
+        $this->jsonResponse($response);
     }
 }

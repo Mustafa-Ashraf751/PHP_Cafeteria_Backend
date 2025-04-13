@@ -94,7 +94,18 @@ class Order
             }
 
             $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $totalAmount = 0;
+            foreach ($orders as $order) {
+                $totalAmount += (float) $order['total_amount'];
+            }
+
+            return [
+                'orders' => $orders,
+                'count' => count($orders),
+                'total_amount' => $totalAmount
+            ];
         } catch (PDOException $e) {
             throw new Exception("Error fetching users orders" . $e->getMessage());
         }
@@ -168,6 +179,140 @@ class Order
         } catch (PDOException $e) {
             error_log("Error in cancelOrder: " . $e->getMessage());
             return false;
+        }
+    }
+
+
+    public function getUsersWithOrders($startDate = null, $endDate = null)
+    {
+        try {
+            // Use LEFT JOIN but require at least one order
+            $sql = "SELECT u.id as user_id, u.fullName, u.email, u.role, 
+                    COUNT(o.id) as order_count, SUM(o.total_amount) as total_spent 
+                    FROM users u 
+                    LEFT JOIN orders o ON u.id = o.user_id
+                    WHERE o.id IS NOT NULL";
+
+            $params = [];
+
+            if ($startDate) {
+                $sql .= " AND o.created_at >= :start_date";
+                $params[':start_date'] = date('Y-m-d H:i:s', strtotime($startDate . ' 00:00:00'));
+            }
+
+            if ($endDate) {
+                $sql .= " AND o.created_at <= :end_date";
+                $params[':end_date'] = date('Y-m-d H:i:s', strtotime($endDate . ' 23:59:59'));
+            }
+
+            $sql .= " GROUP BY u.id ORDER BY order_count DESC";
+
+            $stmt = $this->db->prepare($sql);
+
+            foreach ($params as $param => $value) {
+                $stmt->bindValue($param, $value, PDO::PARAM_STR);
+            }
+
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log('Error in getUsersWithOrders: ' . $e->getMessage());
+            throw new Exception('Error fetching users with orders');
+        }
+    }
+
+    public function getAllUsersWithOrderSummary($page = 1, $perPage = 10, $startDate = null, $endDate = null)
+    {
+        try {
+            // Calculate offset for pagination
+            $page = max(1, (int)$page);
+            $perPage = max(1, min(100, (int)$perPage));
+            $offset = ($page - 1) * $perPage;
+
+            // Count total number of matching users first (for pagination metadata)
+            $countSql = "SELECT COUNT(DISTINCT u.id) as total FROM users u 
+                        LEFT JOIN orders o ON u.id = o.user_id
+                        WHERE o.id IS NOT NULL";
+
+            $countParams = [];
+
+            if ($startDate) {
+                $countSql .= " AND o.created_at >= :start_date";
+                $countParams[':start_date'] = date('Y-m-d H:i:s', strtotime($startDate . ' 00:00:00'));
+            }
+
+            if ($endDate) {
+                $countSql .= " AND o.created_at <= :end_date";
+                $countParams[':end_date'] = date('Y-m-d H:i:s', strtotime($endDate . ' 23:59:59'));
+            }
+
+            $countStmt = $this->db->prepare($countSql);
+
+            foreach ($countParams as $param => $value) {
+                $countStmt->bindValue($param, $value, PDO::PARAM_STR);
+            }
+
+            $countStmt->execute();
+            $totalCount = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+            $totalPages = ceil($totalCount / $perPage);
+
+            // Main query with pagination
+            $sql = "SELECT u.id as user_id, u.fullName, u.email, u.role, 
+                    COUNT(o.id) as order_count, SUM(o.total_amount) as total_spent 
+                    FROM users u 
+                    LEFT JOIN orders o ON u.id = o.user_id
+                    WHERE o.id IS NOT NULL";
+
+            $params = [];
+
+            if ($startDate) {
+                $sql .= " AND o.created_at >= :start_date";
+                $params[':start_date'] = date('Y-m-d H:i:s', strtotime($startDate . ' 00:00:00'));
+            }
+
+            if ($endDate) {
+                $sql .= " AND o.created_at <= :end_date";
+                $params[':end_date'] = date('Y-m-d H:i:s', strtotime($endDate . ' 23:59:59'));
+            }
+
+            $sql .= " GROUP BY u.id ORDER BY order_count DESC LIMIT :limit OFFSET :offset";
+
+            $stmt = $this->db->prepare($sql);
+
+            // Bind all parameters
+            foreach ($params as $param => $value) {
+                $stmt->bindValue($param, $value, PDO::PARAM_STR);
+            }
+
+            // Bind pagination parameters
+            $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+
+            $stmt->execute();
+            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Format the results
+            foreach ($users as &$user) {
+                $user['user_id'] = (int)$user['user_id'];
+                $user['order_count'] = (int)$user['order_count'];
+                $user['total_spent'] = (float)$user['total_spent'];
+            }
+
+            // Return data with pagination metadata
+            return [
+                'data' => $users,
+                'pagination' => [
+                    'page' => $page,
+                    'per_page' => $perPage,
+                    'total_items' => $totalCount,
+                    'total_pages' => $totalPages,
+                    'has_next' => $page < $totalPages,
+                    'has_prev' => $page > 1
+                ]
+            ];
+        } catch (PDOException $e) {
+            error_log('Error in getAllUsersWithOrderSummary: ' . $e->getMessage());
+            throw new Exception('Error fetching user order summary: ' . $e->getMessage());
         }
     }
 }

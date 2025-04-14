@@ -38,9 +38,6 @@ $router->post('/categories', CategoryController::class, 'addCategory');
 $router->put('/categories/{id}', CategoryController::class, 'updateCategory');
 $router->delete('/categories/{id:\d+}', CategoryController::class, 'deleteCategoryById');
 
-// Define routes for order management
-$router->get('/orders', OrderController::class,'index');
-
 // Admin only routes
 $router->get('/admin/users', UserController::class, 'index');
 $router->post('/admin/users', UserController::class, 'register');
@@ -54,8 +51,7 @@ $router->get('/orders/{id}', OrderController::class, 'show'); // Get a single or
 $router->post('/orders', OrderController::class, 'store');  // Create a new order
 $router->patch('/orders/{id}/status', OrderController::class, 'updateStatus');  // Update order status
 $router->patch('/orders/{id}/cancel', OrderController::class, 'cancel');  // Cancel an order (replaces delete)
-
-
+$router->get('/orders/{id}/info', OrderController::class, 'getOrderInfo');  // Cancel an order (replaces delete)
 
 // Handle 404 errors
 $router->setNotFoundHandler(function () {

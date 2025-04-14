@@ -50,7 +50,7 @@ class UserController
   {
     try {
       $data = json_decode(file_get_contents("php://input"), true);
-      
+
       if (!isset($data['email']) || !isset($data['password'])) {
         $this->jsonResponse(['error' => 'Email and password are required'], 400);
       }
@@ -58,17 +58,15 @@ class UserController
       $user = $this->userService->getUserByEmail($data['email']);
 
       if (!$user) {
-          $this->jsonResponse(['error' => 'User not found'], 401);
+        $this->jsonResponse(['error' => 'User not found'], 401);
       }
 
       if (password_verify($data['password'], $user['password']) === false) {
-          $this->jsonResponse(['error' => 'Incorrect password'], 401);
-      }else{
+        $this->jsonResponse(['error' => 'Incorrect password'], 401);
+      } else {
         $token = $this->jwtService->generate($user);
         $this->jsonResponse(['token' => $token, 'user' => $user]);
       }
-
-      
     } catch (Exception $e) {
       $this->jsonResponse(['error' => $e->getMessage()], 500);
     }
@@ -83,7 +81,7 @@ class UserController
       if (!$userData) {
         $this->jsonResponse(['error' => 'Invalid input please try again'], 400);
       }
-      
+
       $createdUserId = $this->userService->createUser($userData);
       $createdUser = $this->userService->getUserById($createdUserId);
       $this->jsonResponse(['message' => 'User registered successfully', 'user' => $createdUser], 201);
@@ -95,7 +93,7 @@ class UserController
   public function index()
   {
     $this->authenticateAdmin();
-    
+
     try {
       $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
       $perPage = isset($_GET['per_page']) ? (int) $_GET['per_page'] : 6;
@@ -115,7 +113,7 @@ class UserController
         try {
           $token = str_replace('Bearer ', '', $headers['Authorization']);
           $decoded = $this->jwtService->verify($token);
-          
+
           // If not admin and not requesting own profile, deny access
           if ($decoded->data->role !== 'admin' && $decoded->data->id != $userId) {
             $this->jsonResponse(['error' => 'Access denied'], 403);
@@ -146,7 +144,7 @@ class UserController
         try {
           $token = str_replace('Bearer ', '', $headers['Authorization']);
           $decoded = $this->jwtService->verify($token);
-          
+
           // If not admin and not updating own profile, deny access
           if ($decoded->data->role !== 'admin' && $decoded->data->id != $id) {
             $this->jsonResponse(['error' => 'Access denied'], 403);
@@ -162,11 +160,11 @@ class UserController
       if (!$userData) {
         $this->jsonResponse(['error' => 'Invalid input please try again'], 400);
       }
-      
+
       if (isset($userData['role']) && $decoded->data->role !== 'admin') {
         unset($userData['role']);
       }
-      
+
       $updated = $this->userService->updateUser($id, $userData);
       if ($updated) {
         $updatedUser = $this->userService->getUserById($id);
@@ -182,7 +180,7 @@ class UserController
   public function delete($id)
   {
     $this->authenticateAdmin();
-    
+
     try {
       $deleted = $this->userService->deleteUser($id);
       if ($deleted) {

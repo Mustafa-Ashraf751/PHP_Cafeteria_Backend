@@ -5,16 +5,19 @@ namespace App\Controllers;
 use App\Services\OrderService;
 use Exception;
 use App\Services\JwtService;
+use App\Helpers\Auth\AuthHelper;
+use App\Helpers\Response\ResponseHelper;
 
 class OrderController
 {
-    private $orderService;
-    private $jwtService;
+    private $orderService;    private $jwtService;
+    private $authHelper;
 
     public function __construct()
     {
         $this->orderService = new OrderService();
         $this->jwtService = new JwtService();
+        $this->authHelper = new AuthHelper(new \App\Services\JwtService());
     }
 
     private function jsonResponse($data, $statusCode = 200)
@@ -70,13 +73,7 @@ class OrderController
         echo json_encode($response);
     }
 
-    // method to get all orders
-    public function index()
-    {
-        $orders = $this->orderService->getAllOrders();
-
-        echo json_encode($orders);
-    }
+    
 
     // method to show a single order
     public function show($id)
@@ -183,5 +180,31 @@ class OrderController
 
         // Send response
         $this->jsonResponse($response);
+    
+
+        
+    }
+
+    public function index()
+    {
+        $this->authHelper->authenticateAdmin();
+
+        try {
+            $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+            $perPage = isset($_GET['per_page']) ? (int)$_GET['per_page'] : 6;
+            $orderField = $_GET['order_field'] ?? 'created_at';
+            $orderSort = $_GET['order_sort'] ?? 'ASC';
+
+            $orders = $this->orderService->getAllOrders(
+                $page, 
+                $perPage, 
+                $orderField, 
+                $orderSort
+            );
+
+            ResponseHelper::jsonResponse($orders);
+        } catch (Exception $e) {
+            ResponseHelper::jsonResponse(['error' => $e->getMessage()], 500);
+        }
     }
 }

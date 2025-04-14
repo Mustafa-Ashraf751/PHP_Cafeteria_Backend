@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Order;
+use App\Models\OrderModel;
 use Exception;
 
 class OrderService
@@ -11,7 +11,7 @@ class OrderService
 
     public function __construct()
     {
-        $this->orderModel = new Order();
+        $this->orderModel = new OrderModel();
     }
 
     // create order
@@ -36,10 +36,15 @@ class OrderService
     }
 
     // get all orders
-    public function getAllOrders()
+  
+
+    public function getAllOrders($page = 1, $perPage = 10, $orderField= "created_at", $orderSort= "ASC")
     {
         try {
-            return $this->orderModel->getAllOrders();
+            //Validate the parameters before send it to controller
+            $page = max(1, (int)$page);
+            $perPage = max(1, min(100, (int)$perPage));
+            return $this->orderModel->getAllOrders($page, $perPage, $orderField, $orderSort);
         } catch (Exception $e) {
             return ['status' => 'error', 'message' => 'Failed to fetch orders: ' . $e->getMessage()];
         }
@@ -206,4 +211,7 @@ class OrderService
             ];
         }
     }
+
+  
+
 }

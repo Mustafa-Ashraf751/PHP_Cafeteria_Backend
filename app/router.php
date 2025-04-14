@@ -12,8 +12,6 @@ $router = new Router('/PHP_Cafeteria_Backend/public');
 
 use App\Services\CategoryService;
 
-$router = new Router('/PHP_Cafeteria_Backend/public');
-
 //Public routes
 $router->post('/login', UserController::class, 'login');
 

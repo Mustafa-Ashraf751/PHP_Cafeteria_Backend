@@ -65,7 +65,7 @@ class UserController
         $this->jsonResponse(['error' => 'Incorrect password'], 401);
       } else {
         $token = $this->jwtService->generate($user);
-        $this->jsonResponse(['token' => $token, 'user' => $user]);
+        $this->jsonResponse(['token' => $token]);
       }
     } catch (Exception $e) {
       $this->jsonResponse(['error' => $e->getMessage()], 500);
@@ -77,8 +77,38 @@ class UserController
     $this->authenticateAdmin();
 
     try {
-      $userData = json_decode(file_get_contents('php://input'), true);
-      if (!$userData) {
+      // Handle FormData instead of JSON
+      $userData = [];
+      
+      // Process FormData fields
+      foreach ($_POST as $key => $value) {
+        $userData[$key] = $value;
+      }
+      
+      // Process file upload if present
+      if (isset($_FILES['profilePic']) && $_FILES['profilePic']['error'] === UPLOAD_ERR_OK) {
+        // Define upload directory
+        $uploadDir = __DIR__ . '/../../public/uploads/profile_pics/';
+        
+        // Create directory if it doesn't exist
+        if (!file_exists($uploadDir)) {
+          mkdir($uploadDir, 0755, true);
+        }
+        
+        // Generate unique filename
+        $fileName = uniqid() . '_' . basename($_FILES['profilePic']['name']);
+        $targetFilePath = $uploadDir . $fileName;
+        
+        // Move uploaded file to target directory
+        if (move_uploaded_file($_FILES['profilePic']['tmp_name'], $targetFilePath)) {
+          $userData['profilePic'] = 'uploads/profile_pics/' . $fileName;
+        } else {
+          $this->jsonResponse(['error' => 'Failed to upload profile picture'], 500);
+        }
+      }
+      
+      // Validate userData
+      if (empty($userData)) {
         $this->jsonResponse(['error' => 'Invalid input please try again'], 400);
       }
 

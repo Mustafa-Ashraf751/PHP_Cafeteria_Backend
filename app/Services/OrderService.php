@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\OrderModel;
 use Exception;
+use SebastianBergmann\Environment\Console;
 
 class OrderService
 {
@@ -36,14 +37,14 @@ class OrderService
     }
 
     // get all orders
-  
 
-    public function getAllOrders($page = 1, $perPage = 10, $orderField= "created_at", $orderSort= "ASC")
+
+    public function getAllOrders($page = 1, $perPage = 10, $orderField = "created_at", $orderSort = "ASC")
     {
         try {
             //Validate the parameters before send it to controller
-            $page = max(1, (int)$page);
-            $perPage = max(1, min(100, (int)$perPage));
+            $page = max(1, (int) $page);
+            $perPage = max(1, min(100, (int) $perPage));
             return $this->orderModel->getAllOrders($page, $perPage, $orderField, $orderSort);
         } catch (Exception $e) {
             return ['status' => 'error', 'message' => 'Failed to fetch orders: ' . $e->getMessage()];
@@ -140,7 +141,7 @@ class OrderService
 
             return [
                 'status' => 'success',
-                'data' => $result,
+                'data' => [],
                 'summary' => [
                     'total_orders' => $result['count'],
                     'total_amount' => $result['total_amount']
@@ -160,8 +161,8 @@ class OrderService
     {
         try {
             // Validate pagination parameters
-            $page = max(1, (int)$page);
-            $perPage = max(1, min(100, (int)$perPage));
+            $page = max(1, (int) $page);
+            $perPage = max(1, min(100, (int) $perPage));
 
             // Validate date formats if provided
             if ($startDate && !strtotime($startDate)) {
@@ -212,6 +213,18 @@ class OrderService
         }
     }
 
-  
+    public function getOrderInfo($order_id)
+    {
+        try {
+            if (empty($order_id)) {
+                return ['status' => 'error', 'message' => 'Invalid order ID.'];
+            }
 
+            $result = $this->orderModel->getOrderInfo($order_id);
+
+            return ['status' => 'success', 'data' => $result];
+        } catch (Exception $e) {
+            return ['status' => 'error', 'message' => 'Failed to fetch order info: ' . $e->getMessage()];
+        }
+    }
 }

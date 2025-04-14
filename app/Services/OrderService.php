@@ -141,7 +141,7 @@ class OrderService
 
             return [
                 'status' => 'success',
-                'data' => [],
+                'data' => $result['orders'],
                 'summary' => [
                     'total_orders' => $result['count'],
                     'total_amount' => $result['total_amount']

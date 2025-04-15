@@ -4,16 +4,25 @@ namespace App\Services;
 
 use App\Models\UserModel;
 use Exception;
+use Cloudinary\Cloudinary;
 
 class UserService
 {
 
 
   private $userModel;
+  private $cloudinary;
 
   public function __construct()
   {
     $this->userModel = new UserModel();
+    $this->cloudinary = new Cloudinary([
+      'cloud' => [
+        'cloud_name' => $_ENV['CLOUDINARY_CLOUD_NAME'],
+        'api_key'    => $_ENV['CLOUDINARY_API_KEY'],
+        'api_secret' => $_ENV['CLOUDINARY_API_SECRET'],
+      ]
+    ]);
   }
 
   public function getAllUsers($page = 1, $perPage = 10)
@@ -49,6 +58,18 @@ class UserService
       throw new Exception("Role is required please enter a role");
     }
 
+    if (!empty($userData['profilePic'])) {
+      try {
+        $uploadResult = $this->cloudinary->uploadApi()->upload($userData['profilePic'], [
+          'folder' => 'profile_pics',
+          'resource_type' => 'image'
+        ]);
+        $userData['profilePic'] = $uploadResult['secure_url'];
+      } catch (\Exception $e) {
+        throw new \RuntimeException('Profile picture upload failed: ' . $e->getMessage());
+      }
+    }
+
     //Check if email is already exist in database
     $existingUser = $this->userModel->getUserByEmail($userData['email']);
     if ($existingUser) {
@@ -62,6 +83,17 @@ class UserService
 
   public function updateUser($id, $userData)
   {
+    if (!empty($userData['profilePic'])) {
+      try {
+        $uploadResult = $this->cloudinary->uploadApi()->upload($userData['profilePic'], [
+          'folder' => 'profile_pics',
+          'resource_type' => 'image'
+        ]);
+        $userData['profilePic'] = $uploadResult['secure_url'];
+      } catch (\Exception $e) {
+        throw new \RuntimeException('Profile picture upload failed: ' . $e->getMessage());
+      }
+    }
     return $this->userModel->updateUser($id, $userData);
   }
 

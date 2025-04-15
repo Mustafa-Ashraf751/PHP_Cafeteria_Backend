@@ -8,9 +8,9 @@ use App\Controllers\ProductController;
 use App\Routers\Router;
 use App\Controllers\UserController;
 
-$router = new Router('/PHP_Cafeteria_Backend/public');
+//$router = new Router('/PHP_Cafeteria_Backend/public');
+$router = new Router('');
 
-use App\Services\CategoryService;
 
 //Public routes
 $router->post('/login', UserController::class, 'login');
@@ -20,7 +20,7 @@ $router->post('/login', UserController::class, 'login');
 $router->get('/users', UserController::class, 'index');
 $router->get('/users/{id}', UserController::class, 'show');
 $router->post('/users', UserController::class, 'store');
-$router->patch('/users/{id}', UserController::class, 'update');
+$router->post('/users/{id}', UserController::class, 'update');
 $router->delete('/users/{id}', UserController::class, 'delete');
 
 // Define routes for product management

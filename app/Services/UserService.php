@@ -83,6 +83,15 @@ class UserService
 
   public function updateUser($id, $userData)
   {
+
+    // Hash password if provided
+    if (!empty($userData['password'])) {
+      $userData['password'] = password_hash($userData['password'], PASSWORD_DEFAULT);
+    } else {
+      // If password is not set or empty, remove it to avoid overwriting with empty value
+      unset($userData['password']);
+    }
+
     if (!empty($userData['profilePic'])) {
       try {
         $uploadResult = $this->cloudinary->uploadApi()->upload($userData['profilePic'], [

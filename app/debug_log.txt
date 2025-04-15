@@ -632,3 +632,39 @@ Array
         )
 
 )
+store() called
+Array
+(
+    [user_id] => 4
+    [room_id] => 1
+    [total_amount] => 300.00
+    [order_items] => Array
+        (
+            [0] => Array
+                (
+                    [quantity] => 3
+                    [price] => 100
+                    [notes] => 
+                )
+
+        )
+
+)
+store() called
+Array
+(
+    [user_id] => 6
+    [room_id] => 1
+    [total_amount] => 300.00
+    [order_items] => Array
+        (
+            [0] => Array
+                (
+                    [quantity] => 3
+                    [price] => 100
+                    [notes] => 
+                )
+
+        )
+
+)

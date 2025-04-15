@@ -24,13 +24,8 @@ class OrderController
 	// method to create a new order
 	public function store()
 	{
-		if (empty($order_id) || !is_numeric($order_id)) {
-			ResponseHelper::jsonResponse(['status' => 'error', 'message' => 'Invalid order ID.'], 400);
-		}
 
-		$user = $this->orderService->getUserOfOrder($order_id);
-
-		$this->authHelper->authenticateUser($user['user_id']);
+		// $this->authHelper->authenticateUser($user['user_id']);
 
 		file_put_contents(__DIR__ . '/../debug_log.txt', "store() called\n", FILE_APPEND);
 

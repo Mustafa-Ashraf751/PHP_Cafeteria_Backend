@@ -158,7 +158,7 @@ class OrderService
 
 
 
-	public function getAllUsersWithOrderSummary($page = 1, $perPage = 10, $startDate = null, $endDate = null)
+	public function getAllUsersWithOrderSummary($page = 1, $perPage = 10, $userId = null, $startDate = null, $endDate = null)
 	{
 		try {
 			// Validate pagination parameters
@@ -180,8 +180,15 @@ class OrderService
 				];
 			}
 
+			if ($userId !== null && (!is_numeric($userId) || (int) $userId <= 0)) {
+				return [
+					'status' => 'error',
+					'message' => 'Invalid user id please provide valid user id'
+				];
+			}
+
 			// Get paginated data from model
-			$result = $this->orderModel->getUsersWithOrders($page, $perPage);
+			$result = $this->orderModel->getUsersWithOrders($page, $perPage, $userId, $startDate, $endDate);
 
 			if (empty($result['data'])) {
 				return [
@@ -218,10 +225,10 @@ class OrderService
 	{
 		try {
 			if (empty($order_id)) {
-				ResponseHelper::jsonResponse(['status' => 'error', 'message' => 'Invalid order ID.'], 400);
+				return ['status' => 'error', 'message' => 'Invalid order ID.'];
 			}
-
 			$result = $this->orderModel->getOrderInfo($order_id);
+
 
 			return ['status' => 'success', 'data' => $result];
 		} catch (Exception $e) {
@@ -242,4 +249,5 @@ class OrderService
 			return ['status' => 'error', 'message' => 'Failed to fetch order info: ' . $e->getMessage()];
 		}
 	}
+
 }

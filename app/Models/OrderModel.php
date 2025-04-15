@@ -161,7 +161,6 @@ class OrderModel
 		}
 	}
 
-
 	public function updateOrderStatus($id, $orderStatus)
 	{
 		try {

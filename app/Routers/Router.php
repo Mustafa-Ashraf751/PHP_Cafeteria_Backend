@@ -102,7 +102,7 @@ class Router
 
         // Convert numeric strings to integers
         $params = array_map(function ($param) {
-          return is_numeric($param) ? (int)$param : $param;
+          return is_numeric($param) ? (int) $param : $param;
         }, $matches);
 
         // Create controller instance

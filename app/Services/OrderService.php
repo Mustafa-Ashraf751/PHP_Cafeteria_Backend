@@ -16,30 +16,30 @@ class OrderService
 		$this->orderModel = new OrderModel();
 	}
 
-	// create order
-	public function createOrder($userId, $roomId, $totalAmount, $notes = null)
-	{
-		try {
-			if (empty($userId) || empty($roomId) || empty($totalAmount)) {
-				return ['status' => 'error', 'message' => 'Invalid order data.'];
-			}
+    // create order
+    public function createOrder($userId, $roomId, $totalAmount, $notes ,$orderItems)
+    {
+        try {
+            if (empty($userId) || empty($roomId) || empty($totalAmount)) {
+                return ['status' => 'error', 'message' => 'Invalid order data.'];
+            }
 
-			// add order by use Model Order
-			$orderId = $this->orderModel->createOrder($userId, $roomId, $totalAmount, $notes);
+            // add order by use Model Order
+            $orderId = $this->orderModel->createOrder($userId, $roomId, $totalAmount, $notes,$orderItems);
 
-			if ($orderId) {
-				return ['status' => 'success', 'message' => 'Order created successfully from if().', 'orderId' => $orderId];
-			} else {
-				return ['status' => 'error', 'message' => 'Failed to create order in database.'];
-			}
-		} catch (Exception $e) {
-			return ['status' => 'error', 'message' => 'Failed to create order: ' . $e->getMessage()];
-		}
-	}
+            if ($orderId) {
+                return ['status' => 'success', 'message' => 'Order created successfully from if().', 'orderId' => $orderId];
+            } else {
+                return ['status' => 'error', 'message' => 'Failed to create order in database.'];
+            }
+        } catch (Exception $e) {
+            error_log("Order Items received in ServiceOrder: " . print_r($orderItems, true));
+
+            return ['status' => 'error', 'message' => 'Failed to create order: ' . $e->getMessage()];
+        }
+    }
 
 	// get all orders
-
-
 	public function getAllOrders($page = 1, $perPage = 10, $orderField = "created_at", $orderSort = "ASC")
 	{
 		try {
@@ -68,6 +68,26 @@ class OrderService
 			return ['status' => 'error', 'message' => 'Failed to fetch order'];
 		}
 	}
+
+    public function getOrderDetails($orderId)
+{
+    try {
+        
+        if (empty($orderId) || !is_numeric($orderId) || $orderId <= 0) {
+            return ['status' => 'error', 'message' => 'Invalid order ID'];
+        }
+
+        $orderDetails = $this->orderModel->getOrderDetails($orderId);
+        
+        if (!$orderDetails || isset($orderDetails['status']) && $orderDetails['status'] === 'error') {
+            return ['status' => 'error', 'message' => 'Order details not found'];
+        }
+
+        return ['status' => 'success', 'orderDetails' => $orderDetails];
+    } catch (Exception $e) {
+        return ['status' => 'error', 'message' => 'Failed to fetch order details: ' . $e->getMessage()];
+    }
+}
 
 	// update order status
 	public function updateOrderStatus($id, $orderStatus)

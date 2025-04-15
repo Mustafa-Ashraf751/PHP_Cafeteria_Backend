@@ -79,34 +79,39 @@ class UserController
     try {
       // Handle FormData instead of JSON
       $userData = [];
-      
+
       // Process FormData fields
       foreach ($_POST as $key => $value) {
         $userData[$key] = $value;
       }
-      
+
       // Process file upload if present
+      // if (isset($_FILES['profilePic']) && $_FILES['profilePic']['error'] === UPLOAD_ERR_OK) {
+      //   // Define upload directory
+      //   $uploadDir = __DIR__ . '/../../public/uploads/profile_pics/';
+
+      //   // Create directory if it doesn't exist
+      //   if (!file_exists($uploadDir)) {
+      //     mkdir($uploadDir, 0755, true);
+      //   }
+
+      //   // Generate unique filename
+      //   $fileName = uniqid() . '_' . basename($_FILES['profilePic']['name']);
+      //   $targetFilePath = $uploadDir . $fileName;
+
+      //   // Move uploaded file to target directory
+      //   if (move_uploaded_file($_FILES['profilePic']['tmp_name'], $targetFilePath)) {
+      //     $userData['profilePic'] = 'uploads/profile_pics/' . $fileName;
+      //   } else {
+      //     $this->jsonResponse(['error' => 'Failed to upload profile picture'], 500);
+      //   }
+      // }
+
       if (isset($_FILES['profilePic']) && $_FILES['profilePic']['error'] === UPLOAD_ERR_OK) {
-        // Define upload directory
-        $uploadDir = __DIR__ . '/../../public/uploads/profile_pics/';
-        
-        // Create directory if it doesn't exist
-        if (!file_exists($uploadDir)) {
-          mkdir($uploadDir, 0755, true);
-        }
-        
-        // Generate unique filename
-        $fileName = uniqid() . '_' . basename($_FILES['profilePic']['name']);
-        $targetFilePath = $uploadDir . $fileName;
-        
-        // Move uploaded file to target directory
-        if (move_uploaded_file($_FILES['profilePic']['tmp_name'], $targetFilePath)) {
-          $userData['profilePic'] = 'uploads/profile_pics/' . $fileName;
-        } else {
-          $this->jsonResponse(['error' => 'Failed to upload profile picture'], 500);
-        }
+        $tmpPath = $_FILES['profilePic']['tmp_name'];
+        $userData['profilePic'] = $tmpPath; // Pass temp file path to service
       }
-      
+
       // Validate userData
       if (empty($userData)) {
         $this->jsonResponse(['error' => 'Invalid input please try again'], 400);
@@ -186,7 +191,27 @@ class UserController
         $this->jsonResponse(['error' => 'Authorization required'], 401);
       }
 
-      $userData = json_decode(file_get_contents('php://input'), true);
+      // Detect content type
+      $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+      $isJson = strpos($contentType, 'application/json') !== false;
+      $isMultipart = strpos($contentType, 'multipart/form-data') !== false;
+
+
+      $userData = [];
+
+      if ($isJson) {
+        $userData = json_decode(file_get_contents('php://input'), true);
+      } elseif ($isMultipart) {
+        foreach ($_POST as $key => $value) {
+          $userData[$key] = $value;
+        }
+        if (isset($_FILES['profilePic']) && $_FILES['profilePic']['error'] === UPLOAD_ERR_OK) {
+          $userData['profilePic'] = $_FILES['profilePic']['tmp_name'];
+        }
+      } else {
+        $this->jsonResponse(['error' => 'Unsupported content type'], 415);
+      }
+
       if (!$userData) {
         $this->jsonResponse(['error' => 'Invalid input please try again'], 400);
       }

@@ -1,0 +1,126 @@
+store() called
+Array
+(
+    [room_id] => 1
+    [total_amount] => 18705.00
+    [order_items] => Array
+        (
+            [0] => Array
+                (
+                    [product_id] => 42
+                    [quantity] => 44
+                    [price] => 45.00
+                    [notes] => 
+                )
+
+            [1] => Array
+                (
+                    [product_id] => 43
+                    [quantity] => 1
+                    [price] => 25.00
+                    [notes] => 
+                )
+
+            [2] => Array
+                (
+                    [product_id] => 46
+                    [quantity] => 1
+                    [price] => 200.00
+                    [notes] => 
+                )
+
+            [3] => Array
+                (
+                    [product_id] => 41
+                    [quantity] => 500
+                    [price] => 33.00
+                    [notes] => 
+                )
+
+        )
+
+)
+store() called
+Array
+(
+    [room_id] => 1
+    [total_amount] => 18705.00
+    [order_items] => Array
+        (
+            [0] => Array
+                (
+                    [product_id] => 42
+                    [quantity] => 44
+                    [price] => 45.00
+                    [notes] => 
+                )
+
+            [1] => Array
+                (
+                    [product_id] => 43
+                    [quantity] => 1
+                    [price] => 25.00
+                    [notes] => 
+                )
+
+            [2] => Array
+                (
+                    [product_id] => 46
+                    [quantity] => 1
+                    [price] => 200.00
+                    [notes] => 
+                )
+
+            [3] => Array
+                (
+                    [product_id] => 41
+                    [quantity] => 500
+                    [price] => 33.00
+                    [notes] => 
+                )
+
+        )
+
+)
+store() called
+Array
+(
+    [room_id] => 1
+    [total_amount] => 18705.00
+    [order_items] => Array
+        (
+            [0] => Array
+                (
+                    [product_id] => 42
+                    [quantity] => 44
+                    [price] => 45.00
+                    [notes] => 
+                )
+
+            [1] => Array
+                (
+                    [product_id] => 43
+                    [quantity] => 1
+                    [price] => 25.00
+                    [notes] => 
+                )
+
+            [2] => Array
+                (
+                    [product_id] => 46
+                    [quantity] => 1
+                    [price] => 200.00
+                    [notes] => 
+                )
+
+            [3] => Array
+                (
+                    [product_id] => 41
+                    [quantity] => 500
+                    [price] => 33.00
+                    [notes] => 
+                )
+
+        )
+
+)

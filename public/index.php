@@ -17,11 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-
+//php -S localhost:8000 -t public
 
 $router = require __DIR__ . '/../app/router.php';
 $router->dispatch();
-
-
-
-

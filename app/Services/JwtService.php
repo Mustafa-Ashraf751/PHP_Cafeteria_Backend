@@ -28,6 +28,7 @@ class JwtService
             'exp' => $expirationTime,
             'data' => [
                 'id' => $userData['id'],
+                'name' => $userData['fullName'],
                 'email' => $userData['email'],
                 'role' => $userData['role']
             ]

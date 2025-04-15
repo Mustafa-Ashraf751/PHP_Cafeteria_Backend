@@ -8,16 +8,16 @@ use App\Routers\Router;
 use App\Controllers\UserController;
 use App\Controllers\OrderController;
 use App\Controllers\RoomController;
+
 $router = new Router('/PHP_Cafeteria_Backend/public');
 
 use App\Services\CategoryService;
-
-$router = new Router('/PHP_Cafeteria_Backend/public');
 
 //Public routes
 $router->post('/login', UserController::class, 'login');
 
 
+// Define routes for user self management
 $router->get('/users', UserController::class, 'index');
 $router->get('/users/{id}', UserController::class, 'show');
 $router->post('/users', UserController::class, 'store');
@@ -45,13 +45,14 @@ $router->delete('/admin/users/{id}', UserController::class, 'delete');
 // Define routes for orders
 $router->get('/orders', OrderController::class, 'index');  // List all orders
 $router->get('/users/{userId}/orders', OrderController::class, 'getUserOrders'); // Get the user order with date range
+$router->get('/users-with-orders', OrderController::class, 'getUsersWithOrders'); // Get all users who make orders
 $router->get('/orders/{id}', OrderController::class, 'show'); // Get a single order by ID
 $router->get('/orders/{id}/details', OrderController::class, 'getOrderDetails'); // Get full order details including products
 $router->post('/orders', OrderController::class, 'store');  // Create a new order
 $router->patch('/orders/{id}/status', OrderController::class, 'updateStatus');  // Update order status
 $router->patch('/orders/{id}/cancel', OrderController::class, 'cancel');  // Cancel an order (replaces delete)
-
 $router->get('/rooms', RoomController::class, 'Show');  // List all orders
+$router->get('/orders/{id}/info', OrderController::class, 'getOrderInfo');  // Cancel an order (replaces delete)
 
 // Handle 404 errors
 $router->setNotFoundHandler(function () {

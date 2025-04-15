@@ -2,17 +2,18 @@
 
 namespace App\Services;
 
-use App\Models\Order;
+use App\Models\OrderModel;
 use Exception;
+use SebastianBergmann\Environment\Console;
 
 class OrderService
 {
-    private $orderModel;
+	private $orderModel;
 
-    public function __construct()
-    {
-        $this->orderModel = new Order();
-    }
+	public function __construct()
+	{
+		$this->orderModel = new OrderModel();
+	}
 
     // create order
     public function createOrder($userId, $roomId, $totalAmount, $notes ,$orderItems)
@@ -37,54 +38,35 @@ class OrderService
         }
     }
 
-    // get all orders
-    public function getAllOrders()
-    {
-        try {
-            $orders = $this->orderModel->getAllOrders();
-    
-            if (!$orders) {
-                return ['status' => 'error', 'message' => 'No orders found'];
-            }
-    
-            return ['status' => 'success', 'orders' => $orders];
-        } catch (Exception $e) {
-            return ['status' => 'error', 'message' => 'Failed to fetch orders: ' . $e->getMessage()];
-        }
-    }
+	// get all orders
+	public function getAllOrders($page = 1, $perPage = 10, $orderField = "created_at", $orderSort = "ASC")
+	{
+		try {
+			//Validate the parameters before send it to controller
+			$page = max(1, (int) $page);
+			$perPage = max(1, min(100, (int) $perPage));
+			return $this->orderModel->getAllOrders($page, $perPage, $orderField, $orderSort);
+		} catch (Exception $e) {
+			return ['status' => 'error', 'message' => 'Failed to fetch orders: ' . $e->getMessage()];
+		}
+	}
 
-    // get order by id
-    public function getOrderById($id)
-    {
-        try {
-            $order = $this->orderModel->getOrderById($id);
+	// get order by id
+	public function getOrderById($id)
+	{
+		try {
+			$order = $this->orderModel->getOrderById($id);
 
-            // Check if the order exists
-            if (isset($order['status']) && $order['status'] === 'error') {
-                return null;
-            }
+			// Check if the order exists
+			if (isset($order['status']) && $order['status'] === 'error') {
+				return null;
+			}
 
-            return $order;
-        } catch (Exception $e) {
-            return ['status' => 'error', 'message' => 'Failed to fetch order'];
-        }
-    }
-
-    // update order status
-    public function updateOrderStatus($id, $orderStatus)
-    {
-        try {
-            $order = $this->orderModel->getOrderById($id);
-            if (!$order) {
-                return ['status' => 'error', 'message' => 'Order not found.'];
-            }
-
-            $this->orderModel->updateOrderStatus($id, $orderStatus);
-            return ['status' => 'success', 'message' => 'Order status updated successfully.'];
-        } catch (Exception $e) {
-            return ['status' => 'error', 'message' => 'Failed to update order status: ' . $e->getMessage()];
-        }
-    }
+			return $order;
+		} catch (Exception $e) {
+			return ['status' => 'error', 'message' => 'Failed to fetch order'];
+		}
+	}
 
     public function getOrderDetails($orderId)
 {
@@ -94,7 +76,6 @@ class OrderService
             return ['status' => 'error', 'message' => 'Invalid order ID'];
         }
 
-       
         $orderDetails = $this->orderModel->getOrderDetails($orderId);
         
         if (!$orderDetails || isset($orderDetails['status']) && $orderDetails['status'] === 'error') {
@@ -107,63 +88,163 @@ class OrderService
     }
 }
 
+	// update order status
+	public function updateOrderStatus($id, $orderStatus)
+	{
+		try {
+			$order = $this->orderModel->getOrderById($id);
+			if (!$order) {
+				return ['status' => 'error', 'message' => 'Order not found.'];
+			}
 
-    // cancel order (replaces delete)
-    public function cancelOrder($id)
-    {
-        try {
-            $order = $this->orderModel->getOrderById($id);
-            if (!$order) {
-                return ['status' => 'error', 'message' => 'Order not found.'];
-            }
+			$this->orderModel->updateOrderStatus($id, $orderStatus);
+			return ['status' => 'success', 'message' => 'Order status updated successfully.'];
+		} catch (Exception $e) {
+			return ['status' => 'error', 'message' => 'Failed to update order status: ' . $e->getMessage()];
+		}
+	}
 
-            $this->orderModel->cancelOrder($id);
-            return ['status' => 'success', 'message' => 'Order cancelled successfully.'];
-        } catch (Exception $e) {
-            return ['status' => 'error', 'message' => 'Failed to cancel order: ' . $e->getMessage()];
-        }
-    }
+	// cancel order (replaces delete)
+	public function cancelOrder($id)
+	{
+		try {
+			$order = $this->orderModel->getOrderById($id);
+			if (!$order) {
+				return ['status' => 'error', 'message' => 'Order not found.'];
+			}
 
-    public function getOrderByUserAndDate($userId, $startDate = null, $endDate = null)
-    {
-        try {
-            if (empty($userId)) {
-                return [
-                    'status' => 'error',
-                    'message' => 'User ID is required'
-                ];
-            }
+			$this->orderModel->cancelOrder($id);
+			return ['status' => 'success', 'message' => 'Order cancelled successfully.'];
+		} catch (Exception $e) {
+			return ['status' => 'error', 'message' => 'Failed to cancel order: ' . $e->getMessage()];
+		}
+	}
 
-            if ($startDate && !strtotime($startDate)) {
-                return [
-                    'status' => 'error',
-                    'message' => 'Invalid start time'
-                ];
-            }
+	public function getOrderByUserAndDate($userId, $startDate = null, $endDate = null)
+	{
+		try {
+			if (empty($userId)) {
+				return [
+					'status' => 'error',
+					'message' => 'User ID is required'
+				];
+			}
 
-            if ($endDate && !strtotime($endDate)) {
-                return [
-                    'status' => 'error',
-                    'message' => 'Invalid end time'
-                ];
-            }
+			if ($startDate && !strtotime($startDate)) {
+				return [
+					'status' => 'error',
+					'message' => 'Invalid start time'
+				];
+			}
 
-            // Get orders from model
-            $orders = $this->orderModel->getOrdersByUserAndDateRange($userId, $startDate, $endDate);
+			if ($endDate && !strtotime($endDate)) {
+				return [
+					'status' => 'error',
+					'message' => 'Invalid end time'
+				];
+			}
 
-            if (!$orders) {
-                return [
-                    'status' => 'error',
-                    'message' => 'No orders found with this user try again'
-                ];
-            }
+			// Get orders from model
+			$result = $this->orderModel->getOrdersByUserAndDateRange($userId, $startDate, $endDate);
 
-            return ['status' => 'success', 'data' => $orders];
-        } catch (Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Failed to fetch orders: ' . $e->getMessage()
-            ];
-        }
-    }
+			if (empty($result['orders'])) {
+				return [
+					'status' => 'success',
+					'data' => [],
+					'summary' => [
+						'total_orders' => 0,
+						'total_amount' => 0
+					],
+					'message' => 'No orders found with this user try again'
+				];
+			}
+
+			return [
+				'status' => 'success',
+				'data' => [],
+				'summary' => [
+					'total_orders' => $result['count'],
+					'total_amount' => $result['total_amount']
+				],
+			];
+		} catch (Exception $e) {
+			return [
+				'status' => 'error',
+				'message' => 'Failed to fetch orders: ' . $e->getMessage()
+			];
+		}
+	}
+
+
+
+	public function getAllUsersWithOrderSummary($page = 1, $perPage = 10, $startDate = null, $endDate = null)
+	{
+		try {
+			// Validate pagination parameters
+			$page = max(1, (int) $page);
+			$perPage = max(1, min(100, (int) $perPage));
+
+			// Validate date formats if provided
+			if ($startDate && !strtotime($startDate)) {
+				return [
+					'status' => 'error',
+					'message' => 'Invalid start date format. Use YYYY-MM-DD'
+				];
+			}
+
+			if ($endDate && !strtotime($endDate)) {
+				return [
+					'status' => 'error',
+					'message' => 'Invalid end date format. Use YYYY-MM-DD'
+				];
+			}
+
+			// Get paginated data from model
+			$result = $this->orderModel->getAllUsersWithOrderSummary($page, $perPage, $startDate, $endDate);
+
+			if (empty($result['data'])) {
+				return [
+					'status' => 'success',
+					'data' => [],
+					'message' => 'No users with orders found',
+					'pagination' => [
+						'page' => $page,
+						'per_page' => $perPage,
+						'total_items' => 0,
+						'total_pages' => 0
+					]
+				];
+			}
+
+			return [
+				'status' => 'success',
+				'data' => $result['data'],
+				'pagination' => $result['pagination'],
+				'filters' => [
+					'start_date' => $startDate,
+					'end_date' => $endDate
+				]
+			];
+		} catch (Exception $e) {
+			return [
+				'status' => 'error',
+				'message' => 'Failed to fetch users with order summary: ' . $e->getMessage()
+			];
+		}
+	}
+
+	public function getOrderInfo($order_id)
+	{
+		try {
+			if (empty($order_id)) {
+				return ['status' => 'error', 'message' => 'Invalid order ID.'];
+			}
+
+			$result = $this->orderModel->getOrderInfo($order_id);
+
+			return ['status' => 'success', 'data' => $result];
+		} catch (Exception $e) {
+			return ['status' => 'error', 'message' => 'Failed to fetch order info: ' . $e->getMessage()];
+		}
+	}
 }

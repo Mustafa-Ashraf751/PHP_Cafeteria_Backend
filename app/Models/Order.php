@@ -81,7 +81,6 @@ class Order
         }
     }
     
-
     public function getAllOrders()
     {
         try {
@@ -170,7 +169,6 @@ class Order
         }
     }
 
-
     public function updateOrderStatus($id, $orderStatus)
     {
         try {
@@ -199,8 +197,7 @@ public function getOrderDetails($orderId)
         if (!is_numeric($orderId) || $orderId <= 0) {
             return ['status' => 'error', 'message' => 'Invalid order ID'];
         }
-
-       
+        // Fetch order details
         $sql = "SELECT od.order_id, od.product_id, od.quantity, od.price, p.name AS product_name 
                 FROM order_details od 
                 JOIN products p ON od.product_id = p.id 
@@ -208,10 +205,8 @@ public function getOrderDetails($orderId)
         
         $stmt = $this->db->prepare($sql);
         $stmt->bindParam(':order_id', $orderId, PDO::PARAM_INT);
-
         error_log("SQL Query: " . $sql); 
         $stmt->execute();
-        
         
         $orderDetails = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -226,8 +221,6 @@ public function getOrderDetails($orderId)
         return ['status' => 'error', 'message' => 'Database error occurred'];
     }
 }
-
-
 
     public function cancelOrder($id)
     {

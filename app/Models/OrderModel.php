@@ -273,84 +273,72 @@ class OrderModel
 		}
 	}
 
-	public function getAllUsersWithOrderSummary($page = 1, $perPage = 10, $startDate = null, $endDate = null)
+	public function getAllUsersWithOrderSummary($page = 1, $perPage = 10, $userId = null, $startDate = null, $endDate = null)
 	{
 		try {
-			// Calculate offset for pagination
 			$page = max(1, (int) $page);
 			$perPage = max(1, min(100, (int) $perPage));
 			$offset = ($page - 1) * $perPage;
 
-			// Count total number of matching users first (for pagination metadata)
-			$countSql = "SELECT COUNT(DISTINCT u.id) as total FROM users u 
-                      LEFT JOIN orders o ON u.id = o.user_id
-                      WHERE o.id IS NOT NULL";
+			// Build WHERE conditions
+			$where = [];
+			$params = [];
 
-			$countParams = [];
-
+			if ($userId) {
+				$where[] = "u.id = :user_id";
+				$params[':user_id'] = $userId;
+			}
 			if ($startDate) {
-				$countSql .= " AND o.created_at >= :start_date";
-				$countParams[':start_date'] = date('Y-m-d H:i:s', strtotime($startDate . ' 00:00:00'));
+				$where[] = "o.created_at >= :start_date";
+				$params[':start_date'] = date('Y-m-d H:i:s', strtotime($startDate . ' 00:00:00'));
 			}
-
 			if ($endDate) {
-				$countSql .= " AND o.created_at <= :end_date";
-				$countParams[':end_date'] = date('Y-m-d H:i:s', strtotime($endDate . ' 23:59:59'));
+				$where[] = "o.created_at <= :end_date";
+				$params[':end_date'] = date('Y-m-d H:i:s', strtotime($endDate . ' 23:59:59'));
 			}
 
+			// Only users with at least one order in the date range
+			$whereSql = $where ? "WHERE " . implode(" AND ", $where) : "";
+
+			// Count total users for pagination
+			$countSql = "SELECT COUNT(DISTINCT u.id) as total
+						  FROM users u
+						  INNER JOIN orders o ON u.id = o.user_id
+						  $whereSql";
 			$countStmt = $this->db->prepare($countSql);
-
-			foreach ($countParams as $param => $value) {
-				$countStmt->bindValue($param, $value, PDO::PARAM_STR);
+			foreach ($params as $param => $value) {
+				$countStmt->bindValue($param, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
 			}
-
 			$countStmt->execute();
 			$totalCount = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 			$totalPages = ceil($totalCount / $perPage);
 
-			// Main query with pagination
-			$sql = "SELECT u.id as user_id, u.fullName, u.email, u.role, 
-                  COUNT(o.id) as order_count, SUM(o.total_amount) as total_spent 
-                  FROM users u 
-                  LEFT JOIN orders o ON u.id = o.user_id
-                  WHERE o.id IS NOT NULL";
-
-			$params = [];
-
-			if ($startDate) {
-				$sql .= " AND o.created_at >= :start_date";
-				$params[':start_date'] = date('Y-m-d H:i:s', strtotime($startDate . ' 00:00:00'));
-			}
-
-			if ($endDate) {
-				$sql .= " AND o.created_at <= :end_date";
-				$params[':end_date'] = date('Y-m-d H:i:s', strtotime($endDate . ' 23:59:59'));
-			}
-
-			$sql .= " GROUP BY u.id ORDER BY order_count DESC LIMIT :limit OFFSET :offset";
-
+			// Main query
+			$sql = "SELECT u.id as user_id, u.fullName, u.email, u.role,
+							COUNT(o.id) as order_count, SUM(o.total_amount) as total_spent
+					 FROM users u
+					 INNER JOIN orders o ON u.id = o.user_id
+					 $whereSql
+					 GROUP BY u.id
+					 ORDER BY order_count DESC
+					 LIMIT :limit OFFSET :offset";
 			$stmt = $this->db->prepare($sql);
 
-			// Bind all parameters
 			foreach ($params as $param => $value) {
-				$stmt->bindValue($param, $value, PDO::PARAM_STR);
+				$stmt->bindValue($param, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
 			}
-
-			// Bind pagination parameters
 			$stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
 			$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 
 			$stmt->execute();
 			$users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-			// Format the results
 			foreach ($users as &$user) {
 				$user['user_id'] = (int) $user['user_id'];
 				$user['order_count'] = (int) $user['order_count'];
 				$user['total_spent'] = (float) $user['total_spent'];
 			}
 
-			// Return data with pagination metadata
 			return [
 				'data' => $users,
 				'pagination' => [

@@ -157,7 +157,7 @@ class OrderService
 
 
 
-    public function getAllUsersWithOrderSummary($page = 1, $perPage = 10, $startDate = null, $endDate = null)
+    public function getAllUsersWithOrderSummary($page = 1, $perPage = 10, $userId = null, $startDate = null, $endDate = null)
     {
         try {
             // Validate pagination parameters
@@ -179,8 +179,15 @@ class OrderService
                 ];
             }
 
+            if ($userId !== null && (!is_numeric($userId) || (int)$userId <= 0)) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Invalid user id please provide valid user id'
+                ];
+            }
+
             // Get paginated data from model
-            $result = $this->orderModel->getAllUsersWithOrderSummary($page, $perPage, $startDate, $endDate);
+            $result = $this->orderModel->getAllUsersWithOrderSummary($page, $perPage, $userId, $startDate, $endDate);
 
             if (empty($result['data'])) {
                 return [

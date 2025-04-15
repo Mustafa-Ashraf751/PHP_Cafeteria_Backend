@@ -164,11 +164,12 @@ class OrderController
 		$perPage = isset($_GET['per_page']) ? (int) $_GET['per_page'] : 10;
 
 		// Get date filters
+		$userId = isset($_GET['user_id']) ? (int)$_GET['user_id'] : null;
 		$startDate = isset($_GET['start_date']) ? $_GET['start_date'] : null;
 		$endDate = isset($_GET['end_date']) ? $_GET['end_date'] : null;
 
 		// Get users with orders summary
-		$response = $this->orderService->getAllUsersWithOrderSummary($page, $perPage, $startDate, $endDate);
+		$response = $this->orderService->getAllUsersWithOrderSummary($page, $perPage, $userId, $startDate, $endDate);
 
 		// Send response
 		ResponseHelper::jsonResponse($response);
@@ -189,5 +190,4 @@ class OrderController
 			ResponseHelper::jsonResponse(['error' => $e->getMessage()], 500);
 		}
 	}
-
 }

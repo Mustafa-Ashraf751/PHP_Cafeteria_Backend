@@ -2,63 +2,73 @@
 
 namespace App\Controllers;
 
+use App\Helpers\Auth\AuthHelper;
+use App\Services\JwtService;
 use App\Services\ProductService;
 use Exception;
 
 class ProductController
 {
-  private $productService;
+    private $productService;
 
-  public function __construct()
-  {
-    $this->productService = new ProductService();
-  }
+    private $jwtService;
+    private $authHelper;
 
-  private function jsonResponse($data, $statusCode = 200)
-  {
-    http_response_code($statusCode);
-    header('Content-Type: application/json');
-    echo json_encode($data);
-    exit;
-  }
-
-  public function getAllProducts()
-  {
-    try {
-      $products = $this->productService->getAllProducts();
-      if ($products) {
-        $this->jsonResponse($products);
-      } else {
-        $this->jsonResponse(['error' => 'Products not found'], 404);
-      }
-    } catch (Exception $e) {
-      $this->jsonResponse([
-        'error' => 'Failed to fetch products',
-        'message' => $e->getMessage()
-      ], 500);
+    public function __construct()
+    {
+        $this->productService = new ProductService();
+        $this->jwtService = new JwtService();
+        $this->authHelper = new AuthHelper(new \App\Services\JwtService());
     }
-  }
 
-  public function getProductById($id)
-  {
-    try {
-      $product = $this->productService->getProductById($id);
-      if ($product) {
-        $this->jsonResponse($product);
-      } else {
-        $this->jsonResponse(['error' => 'Product not found'], 404);
-      }
-    } catch (Exception $e) {
-      $this->jsonResponse([
-        'error' => 'Failed to fetch product',
-        'message' => $e->getMessage()
-      ], 500);
+    private function jsonResponse($data, $statusCode = 200)
+    {
+        http_response_code($statusCode);
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        exit;
     }
-  }
+
+    public function getAllProducts()
+    {
+        try {
+            $products = $this->productService->getAllProducts();
+            if ($products) {
+                $this->jsonResponse($products);
+            } else {
+                $this->jsonResponse(['error' => 'Products not found'], 404);
+            }
+        } catch (Exception $e) {
+            $this->jsonResponse([
+                'error' => 'Failed to fetch products',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getProductById($id)
+    {
+        try {
+            $product = $this->productService->getProductById($id);
+            if ($product) {
+                $this->jsonResponse($product);
+            } else {
+                $this->jsonResponse(['error' => 'Product not found'], 404);
+            }
+        } catch (Exception $e) {
+            $this->jsonResponse([
+                'error' => 'Failed to fetch product',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 
     public function addProduct()
     {
         try {
+
+            $this->authHelper->authenticateAdmin();
+
             $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
             $isJson = strpos($contentType, 'application/json') !== false;
             $isMultipart = strpos($contentType, 'multipart/form-data') !== false;
@@ -96,29 +106,28 @@ class ProductController
             if (isset($input['image'])) {
                 if (is_array($input['image'])) {
                     $input['image'] = $input['image']['tmp_name'];
-                }
-                elseif ($isJson && preg_match('/^data:image\/(\w+);base64,/', $input['image'], $matches)) {
+                } elseif ($isJson && preg_match('/^data:image\/(\w+);base64,/', $input['image'], $matches)) {
                     $input['image'] = $this->handleBase64Image($input['image']);
                 }
             }
 
-      $result = $this->productService->addProduct($input);
+            $result = $this->productService->addProduct($input);
 
-      if ($result) {
-        $this->jsonResponse([
-          'message' => 'Product created successfully',
-          'data' => $result
-        ], 201);
-      }
+            if ($result) {
+                $this->jsonResponse([
+                    'message' => 'Product created successfully',
+                    'data' => $result
+                ], 201);
+            }
 
-      $this->jsonResponse(['error' => 'Product creation failed'], 500);
-    } catch (Exception $e) {
-      $this->jsonResponse([
-        'error' => 'Product creation error',
-        'message' => $e->getMessage()
-      ], 500);
+            $this->jsonResponse(['error' => 'Product creation failed'], 500);
+        } catch (Exception $e) {
+            $this->jsonResponse([
+                'error' => 'Product creation error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
-  }
 
     private function handleBase64Image($base64Image)
     {
@@ -137,8 +146,11 @@ class ProductController
         }
     }
 
-    public function updateProduct($id) {
+    public function updateProduct($id)
+    {
         try {
+            $this->authHelper->authenticateAdmin();
+
             if (isset($_POST['category']) && !isset($_POST['categoryId'])) {
                 $_POST['categoryId'] = $_POST['category'];
             }
@@ -195,19 +207,19 @@ class ProductController
             $data = [
                 'id' => $id,
                 'name' => $input['name'],
-                'price' => (float)$input['price'],
-                'categoryId' => (int)$input['categoryId'],
+                'price' => (float) $input['price'],
+                'categoryId' => (int) $input['categoryId'],
                 'description' => $input['description'] ?? '',
-                'quantity' => (int)($input['quantity'] ?? 0),
+                'quantity' => (int) ($input['quantity'] ?? 0),
                 'updatedAt' => date('Y-m-d H:i:s')
             ];
 
             if (isset($input['image'])) {
                 $data['image'] = $input['image'];
             }
-    
+
             $result = $this->productService->updateProduct($data);
-            
+
             if ($result) {
                 $this->jsonResponse([
                     'message' => 'Product updated successfully',
@@ -227,6 +239,8 @@ class ProductController
     public function deleteProduct($id)
     {
         try {
+            $this->authHelper->authenticateAdmin();
+
             $result = $this->productService->deleteProduct($id);
             if ($result) {
                 return $this->jsonResponse([], 204);

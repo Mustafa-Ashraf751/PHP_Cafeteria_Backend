@@ -24,6 +24,14 @@ class OrderController
 	// method to create a new order
 	public function store()
 	{
+		if (empty($order_id) || !is_numeric($order_id)) {
+			ResponseHelper::jsonResponse(['status' => 'error', 'message' => 'Invalid order ID.'], 400);
+		}
+
+		$user = $this->orderService->getUserOfOrder($order_id);
+
+		$this->authHelper->authenticateUser($user['user_id']);
+
 		file_put_contents(__DIR__ . '/../debug_log.txt', "store() called\n", FILE_APPEND);
 
 		// get data from request body
@@ -35,6 +43,7 @@ class OrderController
 			ResponseHelper::jsonResponse(['status' => 'error', 'message' => 'Missing required fields'], 400);
 			return;
 		}
+
 		$orderItems = isset($data['order_items']) ? $data['order_items'] : [];
 		if (empty($orderItems)) {
 			ResponseHelper::jsonResponse(['status' => 'error', 'message' => 'Order items are required'], 400);
@@ -61,7 +70,7 @@ class OrderController
 	// Index route with pagination and sorting
 	public function index()
 	{
-		//$this->authHelper->authenticateAdmin();
+		$this->authHelper->authenticateAdmin();
 
 		try {
 			$page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
@@ -82,10 +91,16 @@ class OrderController
 		}
 	}
 
-	// method to create a new order
 	// method to show a single order
 	public function show($id)
 	{
+		if (empty($id) || !is_numeric($id)) {
+			ResponseHelper::jsonResponse(['status' => 'error', 'message' => 'Invalid order ID.'], 400);
+		}
+
+		$user = $this->orderService->getUserOfOrder($id);
+
+		$this->authHelper->authenticateUser($user['user_id']);
 
 		if (!is_numeric($id) || $id <= 0) {
 			http_response_code(400);
@@ -152,6 +167,14 @@ class OrderController
 	// method to cancel an order (replaces delete)
 	public function cancel($id)
 	{
+		if (empty($id) || !is_numeric($id)) {
+			ResponseHelper::jsonResponse(['status' => 'error', 'message' => 'Invalid order ID.'], 400);
+		}
+
+		$user = $this->orderService->getUserOfOrder($id);
+
+		$this->authHelper->authenticateUser($user['user_id']);
+
 		$data = json_decode(file_get_contents('php://input'), true);
 		// $orderId = $params['id'];
 
@@ -188,7 +211,29 @@ class OrderController
 		echo json_encode($response);
 	}
 
-	public function getUsersWithOrders()
+	public function getUsersWithOrders($page = 1, $perPage = 10, $orderField = "created_at", $orderSort = "ASC")
+	{
+		try {
+			$this->authHelper->authenticateAdmin();
+			$page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+			$perPage = isset($_GET['per_page']) ? (int) $_GET['per_page'] : 6;
+			$orderField = $_GET['order_field'] ?? 'created_at';
+			$orderSort = $_GET['order_sort'] ?? 'ASC';
+
+			$orders = $this->orderService->getUsersWithOrders(
+				$page,
+				$perPage,
+				$orderField,
+				$orderSort
+			);
+
+			ResponseHelper::jsonResponse($orders);
+		} catch (Exception $e) {
+			ResponseHelper::jsonResponse(['error' => $e->getMessage()], 500);
+		}
+	}
+
+	public function getAllUsersWithOrderSummary()
 	{
 		// Only allow admins to access this endpoint
 		$this->authHelper->authenticateAdmin();

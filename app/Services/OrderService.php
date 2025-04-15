@@ -176,6 +176,18 @@ class OrderService
 		}
 	}
 
+	public function getUsersWithOrders($page = 1, $perPage = 10, $orderField = "created_at", $orderSort = "ASC")
+	{
+		try {
+
+			//Validate the parameters before send it to controller
+			$page = max(1, (int) $page);
+			$perPage = max(1, min(100, (int) $perPage));
+			return $this->orderModel->getUsersWithOrders($page, $perPage, $orderField, $orderSort);
+		} catch (Exception $e) {
+			return ['status' => 'error', 'message' => 'Failed to fetch orders: ' . $e->getMessage()];
+		}
+	}
 
 
 	public function getAllUsersWithOrderSummary($page = 1, $perPage = 10, $userId = null, $startDate = null, $endDate = null)

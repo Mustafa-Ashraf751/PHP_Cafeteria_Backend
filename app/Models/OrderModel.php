@@ -235,43 +235,52 @@ class OrderModel
 		}
 	}
 
-	public function getUsersWithOrders($startDate = null, $endDate = null)
+
+
+	public function getUsersWithOrders($page = 1, $perPage = 6, $orderField = 'created_at', $orderSort = 'ASC')
 	{
 		try {
-			// Use LEFT JOIN but require at least one order
-			$sql = "SELECT u.id as user_id, u.fullName, u.email, u.role, 
-                  COUNT(o.id) as order_count, SUM(o.total_amount) as total_spent 
-                  FROM users u 
-                  LEFT JOIN orders o ON u.id = o.user_id
-                  WHERE o.id IS NOT NULL";
+			OrderQueryHelper::validateOrderSort($orderSort);
+			// Update validation to handle table prefixes
+			OrderQueryHelper::validateOrderField($orderField);
 
-			$params = [];
+			$offset = ($page - 1) * $perPage;
 
-			if ($startDate) {
-				$sql .= " AND o.created_at >= :start_date";
-				$params[':start_date'] = date('Y-m-d H:i:s', strtotime($startDate . ' 00:00:00'));
-			}
+			$query = "SELECT 
+						u.fullName, 
+						u.roomNum, 
+						u.Ext,
+						o.id as order_id, 
+						o.created_at, 
+						o.total_amount,
+						oi.quantity, 
+						oi.price
+					FROM users u
+					INNER JOIN orders o ON u.id = o.user_id
+					INNER JOIN order_details oi ON o.id = oi.order_id
+					WHERE o.order_status = 'Processing'
+					ORDER BY $orderField $orderSort 
+					LIMIT :limit OFFSET :offset";
 
-			if ($endDate) {
-				$sql .= " AND o.created_at <= :end_date";
-				$params[':end_date'] = date('Y-m-d H:i:s', strtotime($endDate . ' 23:59:59'));
-			}
-
-			$sql .= " GROUP BY u.id ORDER BY order_count DESC";
-
-			$stmt = $this->db->prepare($sql);
-
-			foreach ($params as $param => $value) {
-				$stmt->bindValue($param, $value, PDO::PARAM_STR);
-			}
-
+			$stmt = $this->db->prepare($query);
+			$stmt->bindParam(':limit', $perPage, PDO::PARAM_INT);
+			$stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
 			$stmt->execute();
-			return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+			$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+			// Get total count for pagination
+			$totalCount = OrderQueryHelper::getOrderTableCount($this->db, $this->tableName);
+
+			return [
+				'data' => $results,
+				'pagination' => OrderQueryHelper::buildOrderPaginationMeta($totalCount, $page, $perPage, $offset),
+			];
 		} catch (PDOException $e) {
-			error_log('Error in getUsersWithOrders: ' . $e->getMessage());
-			throw new Exception('Error fetching users with orders');
+			throw new Exception("Error fetching users data" . $e->getMessage());
 		}
 	}
+
 
 	public function getAllUsersWithOrderSummary($page = 1, $perPage = 10, $userId = null, $startDate = null, $endDate = null)
 	{

@@ -7,7 +7,6 @@
 # </IfModule> 
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /PHP_Cafeteria_Backend/public/
 
     # Handle preflight requests
     RewriteCond %{REQUEST_METHOD} OPTIONS

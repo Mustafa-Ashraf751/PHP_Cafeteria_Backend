@@ -44,9 +44,11 @@ $router->delete('/admin/users/{id}', UserController::class, 'delete');
 
 // Define routes for orders
 $router->get('/orders', OrderController::class, 'index');  // List all orders
+
 #TODO Delete this route useless i don't need it before production
 $router->get('/users/{userId}/orders', OrderController::class, 'getUserOrders'); // Get the user order with date range
-$router->get('/users-with-orders', OrderController::class, 'getUsersWithOrders'); // Get all users who make orders
+$router->get('/users-orders', OrderController::class, 'getUsersWithOrders'); // Get all users who make orders
+$router->get('/users-with-orders', OrderController::class, 'getAllUsersWithOrderSummary'); // Get all users who make orders
 $router->get('/orders/{id}', OrderController::class, 'show'); // Get a single order by ID
 $router->get('/orders/{id}/details', OrderController::class, 'getOrderDetails'); // Get full order details including products
 $router->post('/orders', OrderController::class, 'store');  // Create a new order

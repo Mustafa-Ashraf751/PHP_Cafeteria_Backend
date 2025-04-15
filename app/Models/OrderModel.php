@@ -353,4 +353,24 @@ class OrderModel
 		}
 	}
 
+	public function getUserOfOrder($orderId)
+	{
+		try {
+			$sql = "SELECT o.user_id
+					FROM $this->tableName  AS o
+					WHERE o.id = :id
+					LIMIT 1
+					";
+
+			$stmt = $this->db->prepare($sql);
+			$stmt->bindParam(':id', $orderId, PDO::PARAM_INT);
+			$stmt->execute();
+
+			return $stmt->fetch(PDO::FETCH_ASSOC);
+		} catch (PDOException $e) {
+			error_log('Error in getOrderInfo: ' . $e->getMessage());
+			throw new Exception('Error fetching order info: ' . $e->getMessage());
+		}
+	}
+
 }

@@ -139,8 +139,7 @@ class OrderController
 
 	public function getUserOrders($userId)
 	{
-		$this->authHelper->authenticateAdmin();
-		//Handle the Authorization later
+		$this->authHelper->authenticateUser($userId);
 
 		$startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
 		$endDate = isset($_GET['end_date']) ? $_GET['end_date'] : '';
@@ -152,7 +151,6 @@ class OrderController
 		// Send response
 		echo json_encode($response);
 	}
-
 
 	public function getUsersWithOrders()
 	{
@@ -178,11 +176,21 @@ class OrderController
 	{
 
 		try {
-			$this->authHelper->authenticateAdmin();
+			if (empty($order_id) || !is_numeric($order_id)) {
+				ResponseHelper::jsonResponse(['status' => 'error', 'message' => 'Invalid order ID.'], 400);
+			}
 
+			$user = $this->orderService->getUserOfOrder($order_id);
+
+			$this->authHelper->authenticateUser($user['user_id']);
+			error_log('' . $order_id);
 			$orders = $this->orderService->getOrderInfo(
 				$order_id
 			);
+
+			if ($orders['status'] === 'error') {
+				ResponseHelper::jsonResponse(['error' => $orders['message']], 500);
+			}
 
 			ResponseHelper::jsonResponse($orders);
 		} catch (Exception $e) {

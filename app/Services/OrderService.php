@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Helpers\Response\ResponseHelper;
 use App\Models\OrderModel;
 use Exception;
 use SebastianBergmann\Environment\Console;
@@ -141,7 +142,7 @@ class OrderService
 
 			return [
 				'status' => 'success',
-				'data' => [],
+				'data' => $result['orders'],
 				'summary' => [
 					'total_orders' => $result['count'],
 					'total_amount' => $result['total_amount']
@@ -180,7 +181,7 @@ class OrderService
 			}
 
 			// Get paginated data from model
-			$result = $this->orderModel->getAllUsersWithOrderSummary($page, $perPage, $startDate, $endDate);
+			$result = $this->orderModel->getUsersWithOrders($page, $perPage);
 
 			if (empty($result['data'])) {
 				return [
@@ -217,12 +218,26 @@ class OrderService
 	{
 		try {
 			if (empty($order_id)) {
-				return ['status' => 'error', 'message' => 'Invalid order ID.'];
+				ResponseHelper::jsonResponse(['status' => 'error', 'message' => 'Invalid order ID.'], 400);
 			}
 
 			$result = $this->orderModel->getOrderInfo($order_id);
 
 			return ['status' => 'success', 'data' => $result];
+		} catch (Exception $e) {
+			return ['status' => 'error', 'message' => 'Failed to fetch order info: ' . $e->getMessage()];
+		}
+	}
+
+	public function getUserOfOrder($order_id)
+	{
+		try {
+			if (empty($order_id)) {
+				ResponseHelper::jsonResponse(['status' => 'error', 'message' => 'Invalid order ID.'], 400);
+			}
+
+			$result = $this->orderModel->getUserOfOrder($order_id);
+			return $result;
 		} catch (Exception $e) {
 			return ['status' => 'error', 'message' => 'Failed to fetch order info: ' . $e->getMessage()];
 		}
